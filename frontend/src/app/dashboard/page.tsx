@@ -8,6 +8,7 @@ import { SummaryCards } from '@/components/dashboard/SummaryCards';
 import { AccountsList } from '@/components/dashboard/AccountsList';
 import { TransactionsList } from '@/components/dashboard/TransactionsList';
 import { NewTransactionModal } from '@/components/transactions/NewTransactionModal';
+import { NequiSimulatorPanel } from '@/components/dashboard/NequiSimulatorPanel';
 import {
   SkeletonCard,
   SkeletonRow,
@@ -185,6 +186,11 @@ export default function DashboardPage() {
             ) : null}
           </section>
         </div>
+
+        {/* ─── Simulador Nequi (solo visible en desarrollo) ─────────────── */}
+        {process.env.NODE_ENV === 'development' && data && (
+          <NequiSimulatorPanel accounts={data.accounts} onSuccess={refetch} />
+        )}
 
         {/* ─── Footer de sesión (debug, solo en desarrollo) ──────────────── */}
         {process.env.NODE_ENV === 'development' && (

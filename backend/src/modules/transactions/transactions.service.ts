@@ -6,29 +6,22 @@ import {
 } from '@nestjs/common';
 import { Prisma, TransactionType } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { balanceDeltaForAccount } from '../../common/utils/balance.utils';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionsDto } from './dto/filter-transactions.dto';
 
-// ─── Helpers de balance ───────────────────────────────────────────────────────
-// Calculan cuánto se debe sumar/restar al balance de una cuenta dado un tipo.
-// Centralizar aquí evita tener lógica de negocio dispersa en múltiples lugares.
+// ─── Parámetros para creación interna (webhooks, seeds, etc.) ────────────────
 
-function balanceDeltaForAccount(
-  type: TransactionType,
-  amount: number,
-  isOrigin: boolean, // true → cuenta origen, false → cuenta destino
-): number {
-  switch (type) {
-    case TransactionType.INCOME:
-      return +amount;                        // suma siempre
-    case TransactionType.EXPENSE:
-      return -amount;                        // resta siempre
-    case TransactionType.TRANSFER:
-      return isOrigin ? -amount : +amount;   // resta en origen, suma en destino
-    default:
-      // TypeScript exhaustiveness check: nunca debería llegar aquí
-      throw new Error(`Tipo de transacción no reconocido: ${type as string}`);
-  }
+export interface CreateTransactionInternalParams {
+  bankAccountId: string;
+  categoryId: string;
+  userId: string;
+  amount: number;
+  // Prisma genera TransactionType como objeto const, no enum nativo de TS.
+  // Usamos Extract para restringir a solo INCOME/EXPENSE sin crear un type nuevo.
+  type: Extract<TransactionType, 'INCOME' | 'EXPENSE'>;
+  description: string;
+  date: Date;
 }
 
 // ─── Select fijo ─────────────────────────────────────────────────────────────
@@ -272,5 +265,33 @@ export class TransactionsService {
     return {
       message: `Transacción '${transactionId}' eliminada y balance de '${transaction.bankAccount.name}' revertido`,
     };
+  }
+
+  // ─── CREAR INTERNA (uso por webhooks / scripts) ───────────────────────────
+  // No hace validaciones de ownership — el caller ya verificó que los IDs
+  // pertenecen al usuario correcto antes de llamar este método.
+
+  async createForWebhook(params: CreateTransactionInternalParams) {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const transaction = await tx.transaction.create({
+        data: {
+          amount:        params.amount,
+          description:   params.description,
+          type:          params.type,
+          date:          params.date,
+          bankAccountId: params.bankAccountId,
+          categoryId:    params.categoryId,
+          userId:        params.userId,
+        },
+        select: TRANSACTION_SELECT,
+      });
+
+      await tx.bankAccount.update({
+        where: { id: params.bankAccountId },
+        data:  { balance: { increment: balanceDeltaForAccount(params.type, params.amount, true) } },
+      });
+
+      return transaction;
+    });
   }
 }

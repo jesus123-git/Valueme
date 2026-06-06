@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { BankAccountsModule } from './modules/bank-accounts/bank-accounts.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
     BankAccountsModule,
     CategoriesModule,
     TransactionsModule,
+    WebhooksModule,
     // Próximos módulos:
     // SavingsGoalsModule, InvestmentsModule
   ],
