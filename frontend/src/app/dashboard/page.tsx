@@ -7,8 +7,10 @@ import Button from '@/components/ui/Button';
 import { SummaryCards } from '@/components/dashboard/SummaryCards';
 import { AccountsList } from '@/components/dashboard/AccountsList';
 import { TransactionsList } from '@/components/dashboard/TransactionsList';
-import { NewTransactionModal } from '@/components/transactions/NewTransactionModal';
-import { BankSimulatorPanel } from '@/components/dashboard/BankSimulatorPanel';
+import { NewTransactionModal }  from '@/components/transactions/NewTransactionModal';
+import { CreateAccountModal }   from '@/components/accounts/CreateAccountModal';
+import { BankSimulatorPanel }   from '@/components/dashboard/BankSimulatorPanel';
+import { ToastContainer, useToast } from '@/components/ui/Toast';
 import {
   SkeletonCard,
   SkeletonRow,
@@ -22,7 +24,9 @@ export default function DashboardPage() {
     applyOptimistic, revertOptimistic, confirmOptimistic,
   } = useDashboard();
 
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpen,   setModalOpen]   = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const { toasts, toast, dismissToast } = useToast();
 
   // Estado inicial vacío → servidor y cliente renderizan lo mismo (sin mismatch).
   // useEffect corre SOLO en el browser después de la hidratación.
@@ -89,16 +93,31 @@ export default function DashboardPage() {
           {/* Acciones */}
           <div className="flex items-center gap-2">
             {!loading && data && (
-              <Button
-                onClick={() => setModalOpen(true)}
-                className="gap-1.5 text-sm"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                </svg>
-                <span className="hidden sm:inline">Nueva transacción</span>
-                <span className="sm:hidden">Nueva</span>
-              </Button>
+              <>
+                {/* Botón Nueva Cuenta */}
+                <Button
+                  variant="ghost"
+                  onClick={() => setAccountOpen(true)}
+                  className="gap-1.5 text-sm border border-slate-200"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  <span className="hidden sm:inline">Nueva cuenta</span>
+                </Button>
+
+                {/* Botón Nueva Transacción */}
+                <Button
+                  onClick={() => setModalOpen(true)}
+                  className="gap-1.5 text-sm"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="hidden sm:inline">Nueva transacción</span>
+                  <span className="sm:hidden">Nueva</span>
+                </Button>
+              </>
             )}
             {!loading && (
               <button
@@ -218,6 +237,20 @@ export default function DashboardPage() {
           onOptimisticConfirm={confirmOptimistic}
         />
       )}
+
+      {/* ─── Modal de nueva cuenta ──────────────────────────────────────── */}
+      <CreateAccountModal
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        onSuccess={(account) => {
+          setAccountOpen(false);
+          toast(`Cuenta "${account.name}" creada exitosamente 🎉`, 'success');
+          refetch();
+        }}
+      />
+
+      {/* ─── Toasts ─────────────────────────────────────────────────────── */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }
