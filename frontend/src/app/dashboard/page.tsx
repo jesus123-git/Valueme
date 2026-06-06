@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/auth.context';
 import { useDashboard } from '@/hooks/useDashboard';
 import Button from '@/components/ui/Button';
@@ -165,11 +166,19 @@ export default function DashboardPage() {
           <section className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-base font-bold text-slate-800">Mis cuentas</h2>
-              {!loading && data && (
-                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                  {data.accounts.length} cuenta{data.accounts.length !== 1 ? 's' : ''}
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {!loading && data && (
+                  <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {data.accounts.length} cuenta{data.accounts.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+                <Link
+                  href="/accounts"
+                  className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+                >
+                  Ver todas →
+                </Link>
+              </div>
             </div>
 
             {loading ? (
