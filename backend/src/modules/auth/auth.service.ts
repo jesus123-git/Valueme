@@ -1,0 +1,89 @@
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../../common/prisma/prisma.service';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { JwtPayload } from './strategies/jwt.strategy';
+
+// Número de rondas de sal para bcrypt.
+// 10 es el estándar: suficientemente seguro y no bloquea el event loop.
+// En producción podrías subir a 12, pero el hash tardaría ~250ms.
+const BCRYPT_ROUNDS = 10;
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  // ─── Registro ─────────────────────────────────────────────────────────────
+
+  async register(dto: RegisterDto) {
+    // 1. Verificar que el email no esté en uso
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (existing) {
+      // 409 Conflict — no revelamos si es un email válido (seguridad)
+      throw new ConflictException('El email ya está registrado');
+    }
+
+    // 2. Hashear la contraseña — NUNCA guardamos texto plano
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+
+    // 3. Crear el usuario en la BD
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        name: dto.name,
+        passwordHash,
+      },
+      // select evita que el passwordHash salga en la respuesta
+      select: { id: true, email: true, name: true },
+    });
+
+    // 4. Emitir token inmediatamente (el usuario queda logueado al registrarse)
+    return this.buildTokenResponse(user);
+  }
+
+  // ─── Login ────────────────────────────────────────────────────────────────
+
+  async login(dto: LoginDto) {
+    // 1. Buscar al usuario (incluimos passwordHash solo aquí, en el servicio)
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    // 2. Verificar contraseña con tiempo constante (bcrypt.compare evita timing attacks)
+    const passwordValid =
+      user !== null && (await bcrypt.compare(dto.password, user.passwordHash));
+
+    if (!passwordValid) {
+      // Mensaje genérico: no indicamos si el email existe o no
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+
+    return this.buildTokenResponse({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    });
+  }
+
+  // ─── Helpers privados ─────────────────────────────────────────────────────
+
+  private buildTokenResponse(user: { id: string; email: string; name: string | null }) {
+    const payload: JwtPayload = { sub: user.id, email: user.email };
+
+    return {
+      accessToken: this.jwtService.sign(payload),
+      user,
+    };
+  }
+}
