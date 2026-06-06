@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/context/auth.context';
 import { useDashboard } from '@/hooks/useDashboard';
 import Button from '@/components/ui/Button';
 import { SummaryCards } from '@/components/dashboard/SummaryCards';
 import { AccountsList } from '@/components/dashboard/AccountsList';
 import { TransactionsList } from '@/components/dashboard/TransactionsList';
+import { NewTransactionModal } from '@/components/transactions/NewTransactionModal';
 import {
   SkeletonCard,
   SkeletonRow,
@@ -14,7 +16,12 @@ import {
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
-  const { data, loading, error, refetch } = useDashboard();
+  const {
+    data, loading, error, refetch,
+    applyOptimistic, revertOptimistic, confirmOptimistic,
+  } = useDashboard();
+
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Saludo dinámico según la hora local
   const hour = new Date().getHours();
@@ -68,19 +75,33 @@ export default function DashboardPage() {
               Aquí está el resumen de tus finanzas
             </p>
           </div>
-          {/* Botón de recarga manual */}
-          {!loading && (
-            <button
-              onClick={refetch}
-              className="text-slate-400 hover:text-emerald-500 transition-colors p-2 rounded-lg hover:bg-emerald-50"
-              title="Actualizar datos"
-              aria-label="Actualizar datos del dashboard"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          )}
+          {/* Acciones */}
+          <div className="flex items-center gap-2">
+            {!loading && data && (
+              <Button
+                onClick={() => setModalOpen(true)}
+                className="gap-1.5 text-sm"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="hidden sm:inline">Nueva transacción</span>
+                <span className="sm:hidden">Nueva</span>
+              </Button>
+            )}
+            {!loading && (
+              <button
+                onClick={refetch}
+                className="text-slate-400 hover:text-emerald-500 transition-colors p-2 rounded-lg hover:bg-emerald-50"
+                title="Actualizar datos"
+                aria-label="Actualizar datos del dashboard"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ─── Error global ─────────────────────────────────────────────── */}
@@ -169,6 +190,18 @@ export default function DashboardPage() {
           </details>
         )}
       </main>
+
+      {/* ─── Modal de nueva transacción ────────────────────────────────── */}
+      {data && (
+        <NewTransactionModal
+          open={modalOpen}
+          accounts={data.accounts}
+          onClose={() => setModalOpen(false)}
+          onOptimisticApply={applyOptimistic}
+          onOptimisticRevert={revertOptimistic}
+          onOptimisticConfirm={confirmOptimistic}
+        />
+      )}
     </div>
   );
 }

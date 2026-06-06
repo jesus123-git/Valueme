@@ -45,10 +45,17 @@ export function TransactionsList({ transactions }: Props) {
       {transactions.map((tx) => {
         const config = TYPE_CONFIG[tx.type];
 
+        // Las transacciones optimistas tienen id prefijado con "temp_"
+        const isOptimistic = tx.id.startsWith('temp_');
+
         return (
           <li
             key={tx.id}
-            className="flex items-center justify-between py-3.5 px-2 rounded-xl hover:bg-slate-50 transition-colors cursor-default"
+            className={`flex items-center justify-between py-3.5 px-2 rounded-xl transition-all cursor-default
+              ${isOptimistic
+                ? 'opacity-70 bg-emerald-50/50 animate-pulse'
+                : 'hover:bg-slate-50'
+              }`}
           >
             {/* Icono + descripción + metadatos */}
             <div className="flex items-center gap-3 min-w-0">
@@ -60,10 +67,16 @@ export function TransactionsList({ transactions }: Props) {
               </span>
 
               <div className="min-w-0">
-                {/* Descripción — truncada si es muy larga */}
-                <p className="text-sm font-medium text-slate-800 truncate max-w-[180px] sm:max-w-xs leading-tight">
-                  {tx.description}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-slate-800 truncate max-w-[160px] sm:max-w-xs leading-tight">
+                    {tx.description}
+                  </p>
+                  {isOptimistic && (
+                    <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                      Guardando…
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   {/* Categoría */}
                   <span className="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md leading-none">
