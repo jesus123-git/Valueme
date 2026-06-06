@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT
+  CASH
+}
+
+enum InvestmentType {
+  ETF
+  STOCK
+  CRYPTO
+}
+
+enum InvTransactionType {
+  BUY
+  SELL
+}
+
+// ─── Modelos ──────────────────────────────────────────────────────────────────
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  bankAccounts BankAccount[]
+  transactions Transaction[]
+  categories   Category[]
+  savingsGoals SavingsGoal[]
+  investments  Investment[]
+
+  @@map("users")
+}
+
+model BankAccount {
+  id                String        @id @default(uuid())
+  name              String
+  type              AccountType
+  balance           Float         @default(0.0)
+  currency          String        @default("COP")
+  provider          String?
+  externalAccountId String?
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions      Transaction[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("bank_accounts")
+}
+
+model Category {
+  id           String        @id @default(uuid())
+  name         String
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([name, userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id            String          @id @default(uuid())
+  amount        Float
+  description   String
+  type          TransactionType
+  date          DateTime        @default(now())
+  bankAccountId String
+  bankAccount   BankAccount     @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime        @default(now())
+
+  @@map("transactions")
+}
+
+model SavingsGoal {
+  id            String    @id @default(uuid())
+  name          String
+  targetAmount  Float
+  currentAmount Float     @default(0.0)
+  deadline      DateTime?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("savings_goals")
+}
+
+model Investment {
+  id           String                  @id @default(uuid())
+  ticker       String
+  name         String
+  type         InvestmentType
+  shares       Float                   @default(0.0)
+  averagePrice Float                   @default(0.0)
+  userId       String
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  history      InvestmentTransaction[]
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  @@unique([ticker, userId])
+  @@map("investments")
+}
+
+model InvestmentTransaction {
+  id            String             @id @default(uuid())
+  type          InvTransactionType
+  shares        Float
+  pricePerShare Float
+  fee           Float              @default(0.0)
+  date          DateTime           @default(now())
+  investmentId  String
+  investment    Investment         @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+
+  @@map("investment_transactions")
+}
