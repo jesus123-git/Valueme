@@ -24,17 +24,17 @@ services:
   # ─── Backend (NestJS) ─────────────────────────────────────────────────────
   backend:
     build:
-      context: ./backend
+      context: ./apps/backend
       dockerfile: Dockerfile
       target: development          # usa el stage "development" en desarrollo
     container_name: finanzas_backend
     restart: unless-stopped
-    env_file: ./backend/.env
+    env_file: ./apps/backend/.env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-finanzas}
       NODE_ENV: development
     volumes:
-      - ./backend:/app
+      - ./apps/backend:/app
       - /app/node_modules          # evita sobreescribir node_modules del contenedor
     ports:
       - "3001:3001"
@@ -45,16 +45,16 @@ services:
   # ─── Frontend (Next.js) ───────────────────────────────────────────────────
   frontend:
     build:
-      context: ./frontend
+      context: ./apps/web
       dockerfile: Dockerfile
       target: development
-    container_name: finanzas_frontend
+    container_name: finanzas_web
     restart: unless-stopped
-    env_file: ./frontend/.env.local
+    env_file: ./apps/web/.env.local
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3001
     volumes:
-      - ./frontend:/app
+      - ./apps/web:/app
       - /app/node_modules
       - /app/.next
     ports:
