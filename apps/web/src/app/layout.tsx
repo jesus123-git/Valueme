@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Providers } from "@/lib/providers";
 import "./globals.css";
 
-// next/font descarga la fuente en build-time → sin layout shift ni petición externa
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Finanzas",
-  description: "Gestión de finanzas personales",
+  title: "Finanzas — Gestión personal y empresarial",
+  description: "Controla tus finanzas personales y empresariales en un solo lugar",
 };
 
 export default function RootLayout({
@@ -17,7 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={`${inter.variable} antialiased`}>{children}</body>
+      <body className={`${inter.variable} antialiased`}>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
