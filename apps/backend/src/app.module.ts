@@ -4,13 +4,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { BusinessesModule } from './businesses/businesses.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
-    // Próximos módulos: TransactionsModule, BudgetsModule, BusinessModule...
+    BusinessesModule,
+    // Próximos módulos: TransactionsModule, CustomersModule, InvoicesModule...
   ],
   controllers: [AppController],
   providers: [AppService],
