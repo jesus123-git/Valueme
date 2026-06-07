@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { ArrowLeft } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 const schema = z.object({
   name: z.string().min(2, 'Mínimo 2 caracteres'),
@@ -19,6 +20,9 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
+
+const inputCls = 'w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
+const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
 
 export default function NewBusinessPage() {
   const router = useRouter();
@@ -40,50 +44,43 @@ export default function NewBusinessPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-100 px-6 py-4">
-        <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link href="/dashboard" className="text-gray-400 hover:text-gray-600 transition">
-            <ArrowLeft size={20} />
-          </Link>
-          <span className="font-semibold text-gray-900">Nueva empresa</span>
+      <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+              <ArrowLeft size={20} />
+            </Link>
+            <span className="font-semibold text-gray-900 dark:text-white">Nueva empresa</span>
+          </div>
+          <ThemeToggle />
         </div>
       </nav>
 
       <main className="max-w-2xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-2xl border border-gray-100 p-8">
-          <h1 className="text-xl font-bold text-gray-900 mb-6">Datos de la empresa</h1>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Datos de la empresa</h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Nombre */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={labelCls}>
                 Nombre comercial <span className="text-red-500">*</span>
               </label>
-              <input
-                {...register('name')}
-                placeholder="Mi Empresa SAS"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              />
+              <input {...register('name')} placeholder="Mi Empresa SAS" className={inputCls} />
               {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
             </div>
 
-            {/* NIT y Razón social */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">NIT</label>
-                <input
-                  {...register('nit')}
-                  placeholder="900123456-7"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
+                <label className={labelCls}>NIT</label>
+                <input {...register('nit')} placeholder="900123456-7" className={inputCls} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Régimen tributario</label>
+                <label className={labelCls}>Régimen tributario</label>
                 <select
                   {...register('taxRegime')}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition bg-white"
+                  className={inputCls}
                 >
                   <option value="">Seleccionar...</option>
                   <option value="SIMPLE">Régimen Simple</option>
@@ -92,40 +89,25 @@ export default function NewBusinessPage() {
               </div>
             </div>
 
-            {/* Email y Teléfono */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  {...register('email')}
-                  type="email"
-                  placeholder="contacto@empresa.com"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
+                <label className={labelCls}>Email</label>
+                <input {...register('email')} type="email" placeholder="contacto@empresa.com" className={inputCls} />
                 {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                <input
-                  {...register('phone')}
-                  placeholder="+57 300 123 4567"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
+                <label className={labelCls}>Teléfono</label>
+                <input {...register('phone')} placeholder="+57 300 123 4567" className={inputCls} />
               </div>
             </div>
 
-            {/* Dirección */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-              <input
-                {...register('address')}
-                placeholder="Calle 123 #45-67, Bogotá"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              />
+              <label className={labelCls}>Dirección</label>
+              <input {...register('address')} placeholder="Calle 123 #45-67, Bogotá" className={inputCls} />
             </div>
 
             {errors.root && (
-              <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">
+              <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
                 {errors.root.message}
               </div>
             )}
@@ -133,7 +115,7 @@ export default function NewBusinessPage() {
             <div className="flex gap-3 pt-2">
               <Link
                 href="/dashboard"
-                className="flex-1 text-center border border-gray-200 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition"
+                className="flex-1 text-center border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-2.5 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
                 Cancelar
               </Link>

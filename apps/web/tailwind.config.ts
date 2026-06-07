@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: 'class', // activa dark mode por clase en el <html>
   // Tailwind solo incluye los estilos de los archivos listados aquí → bundle mínimo
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
