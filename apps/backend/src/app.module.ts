@@ -6,6 +6,7 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { BusinessesModule } from './businesses/businesses.module';
 import { CustomersModule } from './customers/customers.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { CustomersModule } from './customers/customers.module';
     AuthModule,
     BusinessesModule,
     CustomersModule,
-    // Próximos módulos: TransactionsModule, InvoicesModule...
+    TransactionsModule,
+    // Próximos módulos: InvoicesModule...
   ],
   controllers: [AppController],
   providers: [AppService],
