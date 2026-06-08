@@ -68,6 +68,13 @@ enum ProductType {
   SERVICE   // Servicio (sin inventario)
 }
 
+enum PurchaseStatus {
+  DRAFT      // Borrador
+  RECEIVED   // Mercancía recibida
+  PAID       // Pagada
+  CANCELLED  // Cancelada
+}
+
 // ─── MÓDULO CORE: USUARIOS ────────────────────────────────────────────────────
 
 model User {
@@ -251,6 +258,8 @@ model Business {
   products      Product[]
   priceLists    PriceList[]
   quotes        Quote[]
+  suppliers     Supplier[]
+  purchases     Purchase[]
 
   @@map("businesses")
 }
@@ -345,6 +354,7 @@ model Product {
   invoiceItems    InvoiceItem[]
   priceListItems  PriceListItem[]
   quoteItems      QuoteItem[]
+  purchaseItems   PurchaseItem[]
 
   @@index([businessId, isActive])
   @@map("products")
@@ -391,6 +401,69 @@ model QuoteItem {
   product     Product? @relation(fields: [productId], references: [id])
 
   @@map("quote_items")
+}
+
+// ─── MÓDULO EMPRESA: PROVEEDORES ─────────────────────────────────────────────
+
+model Supplier {
+  id          String    @id @default(uuid())
+  businessId  String
+  name        String
+  nit         String?   // NIT o cédula
+  email       String?
+  phone       String?
+  address     String?
+  contactName String?   // Nombre del contacto
+  notes       String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  business    Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  purchases   Purchase[]
+
+  @@index([businessId, isActive])
+  @@map("suppliers")
+}
+
+// ─── MÓDULO EMPRESA: FACTURAS DE COMPRA ──────────────────────────────────────
+
+model Purchase {
+  id          String         @id @default(uuid())
+  businessId  String
+  supplierId  String?
+  number      String                    // OC-0001
+  status      PurchaseStatus @default(DRAFT)
+  issueDate   DateTime       @default(now())
+  dueDate     DateTime?
+  subtotal    Decimal        @db.Decimal(15, 2)
+  tax         Decimal        @default(0) @db.Decimal(15, 2)
+  total       Decimal        @db.Decimal(15, 2)
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  business    Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier    Supplier?      @relation(fields: [supplierId], references: [id])
+  items       PurchaseItem[]
+
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id          String   @id @default(uuid())
+  purchaseId  String
+  productId   String?
+  description String
+  quantity    Decimal  @db.Decimal(10, 3)
+  unitPrice   Decimal  @db.Decimal(15, 2)
+  taxRate     Decimal  @default(0) @db.Decimal(5, 2)
+  total       Decimal  @db.Decimal(15, 2)
+
+  purchase    Purchase  @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product     Product?  @relation(fields: [productId], references: [id])
+
+  @@map("purchase_items")
 }
 
 model PriceList {
