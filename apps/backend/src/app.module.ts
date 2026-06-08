@@ -13,6 +13,7 @@ import { PriceListsModule } from './price-lists/price-lists.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { PurchasesModule } from './purchases/purchases.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { PurchasesModule } from './purchases/purchases.module';
     QuotesModule,
     SuppliersModule,
     PurchasesModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

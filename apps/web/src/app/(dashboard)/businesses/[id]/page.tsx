@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Business, DashboardKPIs } from '@/types';
 import Link from 'next/link';
-import { ArrowLeft, Users, FileText, TrendingUp, TrendingDown, DollarSign, ArrowRightLeft, Package, Tag, ClipboardList, Truck, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Users, FileText, TrendingUp, TrendingDown, DollarSign, ArrowRightLeft, Package, Tag, ClipboardList, Truck, ShoppingCart, BarChart2 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useEffect } from 'react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -207,6 +207,19 @@ export default function BusinessDetailPage() {
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">Facturas</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500">{business?._count?.invoices ?? 0} emitidas</p>
+              </div>
+            </Link>
+
+            <Link
+              href={`/businesses/${id}/reports`}
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-sm transition flex items-center gap-4"
+            >
+              <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
+                <BarChart2 size={20} className="text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">Reportes</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">P&L · Cartera</p>
               </div>
             </Link>
           </div>
