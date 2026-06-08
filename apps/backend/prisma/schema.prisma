@@ -55,6 +55,14 @@ enum GoalStatus {
   CANCELLED
 }
 
+enum QuoteStatus {
+  DRAFT      // Borrador
+  SENT       // Enviada al cliente
+  ACCEPTED   // Aceptada por el cliente
+  REJECTED   // Rechazada
+  INVOICED   // Convertida en factura
+}
+
 enum ProductType {
   PRODUCT   // Producto físico (tiene inventario)
   SERVICE   // Servicio (sin inventario)
@@ -242,6 +250,7 @@ model Business {
   invoices      Invoice[]
   products      Product[]
   priceLists    PriceList[]
+  quotes        Quote[]
 
   @@map("businesses")
 }
@@ -264,6 +273,7 @@ model Customer {
   priceList     PriceList? @relation(fields: [priceListId], references: [id])
   priceListId   String?
   invoices      Invoice[]
+  quotes        Quote[]
 
   @@map("customers")
 }
@@ -290,6 +300,7 @@ model Invoice {
   business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customer      Customer?     @relation(fields: [customerId], references: [id])
   items         InvoiceItem[]
+  quote         Quote?
 
   @@map("invoices")
 }
@@ -333,12 +344,54 @@ model Product {
   business        Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
   invoiceItems    InvoiceItem[]
   priceListItems  PriceListItem[]
+  quoteItems      QuoteItem[]
 
   @@index([businessId, isActive])
   @@map("products")
 }
 
 // ─── MÓDULO EMPRESA: LISTAS DE PRECIOS ───────────────────────────────────────
+
+// ─── MÓDULO EMPRESA: COTIZACIONES ────────────────────────────────────────────
+
+model Quote {
+  id          String      @id @default(uuid())
+  businessId  String
+  customerId  String?
+  invoiceId   String?     @unique  // Cuando se convierte en factura
+  number      String               // CT-0001, CT-0002...
+  status      QuoteStatus @default(DRAFT)
+  validUntil  DateTime?
+  notes       String?
+  subtotal    Decimal     @db.Decimal(15, 2)
+  tax         Decimal     @default(0) @db.Decimal(15, 2)
+  total       Decimal     @db.Decimal(15, 2)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  business    Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  invoice     Invoice?    @relation(fields: [invoiceId], references: [id])
+  items       QuoteItem[]
+
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id          String   @id @default(uuid())
+  quoteId     String
+  productId   String?
+  description String
+  quantity    Decimal  @db.Decimal(10, 3)
+  unitPrice   Decimal  @db.Decimal(15, 2)
+  taxRate     Decimal  @default(0) @db.Decimal(5, 2)
+  total       Decimal  @db.Decimal(15, 2)
+
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id])
+
+  @@map("quote_items")
+}
 
 model PriceList {
   id          String   @id @default(uuid())
