@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
+// ─── Enums — Módulo Personal ──────────────────────────────────────────────────
 
 enum TransactionType {
   INCOME
@@ -33,7 +33,38 @@ enum InvTransactionType {
   SELL
 }
 
-// ─── Modelos ──────────────────────────────────────────────────────────────────
+// ─── Enums — Módulo Empresarial ───────────────────────────────────────────────
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  VIEWED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  INVOICED
+}
+
+enum ProductType {
+  PRODUCT
+  SERVICE
+}
+
+enum PurchaseStatus {
+  DRAFT
+  RECEIVED
+  PAID
+  CANCELLED
+}
+
+// ─── Usuario (compartido) ─────────────────────────────────────────────────────
 
 model User {
   id           String        @id @default(uuid())
@@ -43,14 +74,20 @@ model User {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
+  // Módulo personal
   bankAccounts BankAccount[]
   transactions Transaction[]
   categories   Category[]
   savingsGoals SavingsGoal[]
   investments  Investment[]
 
+  // Módulo empresarial
+  businesses   Business[]
+
   @@map("users")
 }
+
+// ─── Módulo Personal: Cuentas ─────────────────────────────────────────────────
 
 model BankAccount {
   id                String        @id @default(uuid())
@@ -69,6 +106,8 @@ model BankAccount {
   @@map("bank_accounts")
 }
 
+// ─── Módulo Personal: Categorías ─────────────────────────────────────────────
+
 model Category {
   id           String        @id @default(uuid())
   name         String
@@ -79,6 +118,8 @@ model Category {
   @@unique([name, userId])
   @@map("categories")
 }
+
+// ─── Módulo Personal: Transacciones ──────────────────────────────────────────
 
 model Transaction {
   id            String          @id @default(uuid())
@@ -97,6 +138,8 @@ model Transaction {
   @@map("transactions")
 }
 
+// ─── Módulo Personal: Metas de Ahorro ────────────────────────────────────────
+
 model SavingsGoal {
   id            String    @id @default(uuid())
   name          String
@@ -110,6 +153,8 @@ model SavingsGoal {
 
   @@map("savings_goals")
 }
+
+// ─── Módulo Personal: Inversiones ────────────────────────────────────────────
 
 model Investment {
   id           String                  @id @default(uuid())
@@ -139,4 +184,284 @@ model InvestmentTransaction {
   investment    Investment         @relation(fields: [investmentId], references: [id], onDelete: Cascade)
 
   @@map("investment_transactions")
+}
+
+// ─── Módulo Empresarial: Empresa ──────────────────────────────────────────────
+
+model Business {
+  id            String    @id @default(uuid())
+  userId        String
+  name          String
+  nit           String?
+  legalName     String?
+  logoUrl       String?
+  address       String?
+  phone         String?
+  email         String?
+  taxRegime     String?   // "SIMPLE" | "ORDINARIO"
+  isActive      Boolean   @default(true)
+  usePriceLists Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customers     Customer[]
+  invoices      Invoice[]
+  products      Product[]
+  priceLists    PriceList[]
+  quotes        Quote[]
+  suppliers     Supplier[]
+  purchases     Purchase[]
+  bizTransactions BizTransaction[]
+
+  @@map("businesses")
+}
+
+// ─── Módulo Empresarial: Clientes ─────────────────────────────────────────────
+
+model Customer {
+  id          String    @id @default(uuid())
+  businessId  String
+  name        String
+  nit         String?
+  email       String?
+  phone       String?
+  address     String?
+  notes       String?
+  priceListId String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  business    Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  priceList   PriceList? @relation(fields: [priceListId], references: [id])
+  invoices    Invoice[]
+  quotes      Quote[]
+
+  @@map("customers")
+}
+
+// ─── Módulo Empresarial: Facturas ─────────────────────────────────────────────
+
+model Invoice {
+  id          String        @id @default(uuid())
+  businessId  String
+  customerId  String?
+  number      String
+  status      InvoiceStatus @default(DRAFT)
+  issueDate   DateTime      @default(now())
+  dueDate     DateTime?
+  subtotal    Float
+  tax         Float         @default(0)
+  total       Float
+  notes       String?
+  pdfUrl      String?
+  dianCufe    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer    Customer?     @relation(fields: [customerId], references: [id])
+  items       InvoiceItem[]
+  quote       Quote?
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  productId   String?
+  description String
+  quantity    Float
+  unitPrice   Float
+  total       Float
+  taxRate     Float    @default(0)
+
+  invoice     Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product     Product?  @relation(fields: [productId], references: [id])
+
+  @@map("invoice_items")
+}
+
+// ─── Módulo Empresarial: Productos y Servicios ───────────────────────────────
+
+model Product {
+  id             String      @id @default(uuid())
+  businessId     String
+  name           String
+  description    String?
+  type           ProductType @default(PRODUCT)
+  sku            String?
+  price          Float
+  cost           Float?
+  taxRate        Float       @default(19)
+  unit           String      @default("unidad")
+  trackInventory Boolean     @default(false)
+  stock          Float       @default(0)
+  minStock       Float?
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  business        Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invoiceItems    InvoiceItem[]
+  priceListItems  PriceListItem[]
+  quoteItems      QuoteItem[]
+  purchaseItems   PurchaseItem[]
+
+  @@index([businessId, isActive])
+  @@map("products")
+}
+
+// ─── Módulo Empresarial: Listas de Precios ───────────────────────────────────
+
+model PriceList {
+  id          String   @id @default(uuid())
+  businessId  String
+  name        String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  items       PriceListItem[]
+  customers   Customer[]
+
+  @@map("price_lists")
+}
+
+model PriceListItem {
+  id          String   @id @default(uuid())
+  priceListId String
+  productId   String
+  price       Float
+
+  priceList   PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([priceListId, productId])
+  @@map("price_list_items")
+}
+
+// ─── Módulo Empresarial: Cotizaciones ────────────────────────────────────────
+
+model Quote {
+  id          String      @id @default(uuid())
+  businessId  String
+  customerId  String?
+  invoiceId   String?     @unique
+  number      String
+  status      QuoteStatus @default(DRAFT)
+  validUntil  DateTime?
+  notes       String?
+  subtotal    Float
+  tax         Float       @default(0)
+  total       Float
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  business    Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  invoice     Invoice?    @relation(fields: [invoiceId], references: [id])
+  items       QuoteItem[]
+
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id          String   @id @default(uuid())
+  quoteId     String
+  productId   String?
+  description String
+  quantity    Float
+  unitPrice   Float
+  taxRate     Float    @default(0)
+  total       Float
+
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id])
+
+  @@map("quote_items")
+}
+
+// ─── Módulo Empresarial: Proveedores ─────────────────────────────────────────
+
+model Supplier {
+  id          String    @id @default(uuid())
+  businessId  String
+  name        String
+  nit         String?
+  email       String?
+  phone       String?
+  address     String?
+  contactName String?
+  notes       String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  business    Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  purchases   Purchase[]
+
+  @@index([businessId, isActive])
+  @@map("suppliers")
+}
+
+// ─── Módulo Empresarial: Órdenes de Compra ───────────────────────────────────
+
+model Purchase {
+  id          String         @id @default(uuid())
+  businessId  String
+  supplierId  String?
+  number      String
+  status      PurchaseStatus @default(DRAFT)
+  issueDate   DateTime       @default(now())
+  dueDate     DateTime?
+  subtotal    Float
+  tax         Float          @default(0)
+  total       Float
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  business    Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier    Supplier?      @relation(fields: [supplierId], references: [id])
+  items       PurchaseItem[]
+
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id          String   @id @default(uuid())
+  purchaseId  String
+  productId   String?
+  description String
+  quantity    Float
+  unitPrice   Float
+  taxRate     Float    @default(0)
+  total       Float
+
+  purchase    Purchase  @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product     Product?  @relation(fields: [productId], references: [id])
+
+  @@map("purchase_items")
+}
+
+// ─── Módulo Empresarial: Transacciones de Empresa ────────────────────────────
+// Separado del modelo personal Transaction para no romper lógica existente.
+
+model BizTransaction {
+  id            String          @id @default(uuid())
+  businessId    String
+  type          TransactionType
+  amount        Float
+  description   String
+  categoryLabel String?
+  date          DateTime        @default(now())
+  createdAt     DateTime        @default(now())
+
+  business      Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, date])
+  @@map("biz_transactions")
 }

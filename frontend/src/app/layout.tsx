@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { type ReactNode } from 'react';
 import { AuthProvider } from '@/context/auth.context';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
+import { QueryProvider } from '@/components/ui/QueryProvider';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -35,9 +36,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         `}
       >
         <ThemeProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
