@@ -55,6 +55,11 @@ enum GoalStatus {
   CANCELLED
 }
 
+enum ProductType {
+  PRODUCT   // Producto físico (tiene inventario)
+  SERVICE   // Servicio (sin inventario)
+}
+
 // ─── MÓDULO CORE: USUARIOS ────────────────────────────────────────────────────
 
 model User {
@@ -234,6 +239,7 @@ model Business {
   transactions  Transaction[]
   customers     Customer[]
   invoices      Invoice[]
+  products      Product[]
 
   @@map("businesses")
 }
@@ -287,13 +293,42 @@ model Invoice {
 model InvoiceItem {
   id            String   @id @default(uuid())
   invoiceId     String
+  productId     String?  // Referencia opcional al catálogo
   description   String
   quantity      Decimal  @db.Decimal(10, 3)
   unitPrice     Decimal  @db.Decimal(15, 2)
   total         Decimal  @db.Decimal(15, 2)
   taxRate       Decimal  @default(0) @db.Decimal(5, 2)
 
-  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice       Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product       Product?  @relation(fields: [productId], references: [id])
 
   @@map("invoice_items")
+}
+
+// ─── MÓDULO EMPRESA: PRODUCTOS Y SERVICIOS ────────────────────────────────────
+
+model Product {
+  id             String      @id @default(uuid())
+  businessId     String
+  name           String
+  description    String?
+  type           ProductType @default(PRODUCT)
+  sku            String?     // Código interno del producto
+  price          Decimal     @db.Decimal(15, 2)   // Precio de venta base
+  cost           Decimal?    @db.Decimal(15, 2)   // Costo para calcular margen
+  taxRate        Decimal     @default(19) @db.Decimal(5, 2) // IVA %
+  unit           String      @default("unidad")   // unidad, kg, hora, mes...
+  trackInventory Boolean     @default(false)       // Solo PRODUCT type
+  stock          Decimal     @default(0) @db.Decimal(10, 3)
+  minStock       Decimal?    @db.Decimal(10, 3)   // Alerta de stock mínimo
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  business      Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invoiceItems  InvoiceItem[]
+
+  @@index([businessId, isActive])
+  @@map("products")
 }
