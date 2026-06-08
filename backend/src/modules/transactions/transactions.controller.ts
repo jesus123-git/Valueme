@@ -103,6 +103,24 @@ export class TransactionsController {
     return this.transactionsService.getCalendar(user.id, query.year, query.month);
   }
 
+  // ─── GET /api/v1/transactions/summary/categories?year=2026&month=6 ───────
+
+  @Get('summary/categories')
+  @ApiOperation({
+    summary: 'Gastos del mes agrupados por categoría (para gráfica de dona)',
+    description:
+      'Devuelve `{ items: [{ categoryId, categoryName, total, count, percentage }], total }`. ' +
+      'Solo incluye transacciones de tipo EXPENSE.',
+  })
+  @ApiQuery({ name: 'year',  required: true, type: Number, example: 2026 })
+  @ApiQuery({ name: 'month', required: true, type: Number, example: 6 })
+  categoryStats(
+    @CurrentUser() user: { id: string },
+    @Query() query: CalendarQueryDto,
+  ) {
+    return this.transactionsService.getCategoryStats(user.id, query.year, query.month);
+  }
+
   // ─── DELETE /api/v1/transactions/:id ─────────────────────────────────────
 
   @Delete(':id')

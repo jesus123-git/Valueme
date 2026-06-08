@@ -14,6 +14,8 @@ import { TransactionsList } from '@/components/dashboard/TransactionsList';
 import { AIAdvisorCard } from '@/components/dashboard/AIAdvisorCard';
 import { ComingSoonTile } from '@/components/dashboard/ComingSoonTile';
 import { CashflowCalendar } from '@/components/calendar/CashflowCalendar';
+import { CategoryDonutChart } from '@/components/charts/CategoryDonutChart';
+import { useCategoryStats } from '@/hooks/useCategoryStats';
 import { BankSimulatorPanel } from '@/components/dashboard/BankSimulatorPanel';
 import { NewTransactionModal } from '@/components/transactions/NewTransactionModal';
 import { CreateAccountModal } from '@/components/accounts/CreateAccountModal';
@@ -61,6 +63,13 @@ export default function DashboardPage() {
   const [accountOpen,     setAccountOpen]     = useState(false);
   const [calendarSignal,  setCalendarSignal]  = useState(0);
   const { toasts, toast, dismissToast } = useToast();
+
+  // Estadísticas de categorías para MaIA + dona (mes actual)
+  const todayForStats = new Date();
+  const { data: categoryStats } = useCategoryStats(
+    todayForStats.getFullYear(),
+    todayForStats.getMonth() + 1,
+  );
 
   // Polling de webhooks: refresca dashboard Y el calendario cuando llega un SMS
   const handleRefresh = useCallback(() => {
@@ -216,7 +225,11 @@ export default function DashboardPage() {
           {/* ── Fila 2: Asesor MaIA (ancho completo) ────────────────────── */}
           {data && (
             <div className="col-span-1 lg:col-span-12">
-              <AIAdvisorCard data={data} userName={user?.name} />
+              <AIAdvisorCard
+                data={data}
+                userName={user?.name}
+                topCategories={categoryStats?.items}
+              />
             </div>
           )}
           {loading && (
@@ -300,13 +313,14 @@ export default function DashboardPage() {
           </div>
 
           <div className="col-span-1 lg:col-span-5">
-            <ComingSoonTile
-              icon="📊"
-              title="Análisis por Categorías"
-              description="Gráfica de dona con tus gastos agrupados en Comida, Servicios, Transporte y Gustos."
-              step="Etapa 3"
-              minHeight="min-h-[220px]"
-            />
+            <BentoCard className="p-5 h-full">
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                  Gastos por categoría
+                </h2>
+              </div>
+              <CategoryDonutChart refreshSignal={calendarSignal} />
+            </BentoCard>
           </div>
 
           {/* ── Fila 5: Placeholder Excel (ancho completo) ──────────────── */}

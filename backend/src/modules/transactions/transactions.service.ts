@@ -218,6 +218,51 @@ export class TransactionsService {
     };
   }
 
+  // ─── RESUMEN POR CATEGORÍA (para la gráfica de dona) ────────────────────
+
+  async getCategoryStats(userId: string, year: number, month: number) {
+    // Rango Colombia: primer y último día del mes a medianoche Bogotá (UTC-5)
+    const start = new Date(Date.UTC(year, month - 1, 1,  5, 0, 0, 0));
+    const end   = new Date(Date.UTC(year, month,     0, 28, 59, 59, 999)); // último día del mes 23:59:59 Bogotá
+
+    // Agrupar gastos por categoría
+    const grouped = await this.prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        userId,
+        type: TransactionType.EXPENSE,
+        date: { gte: start, lte: end },
+      },
+      _sum:   { amount: true },
+      _count: true,
+      orderBy: { _sum: { amount: 'desc' } },
+    });
+
+    if (grouped.length === 0) {
+      return { year, month, items: [], total: 0 };
+    }
+
+    // Obtener nombres de categorías en un solo query
+    const categoryIds = grouped.map((g) => g.categoryId);
+    const categories  = await this.prisma.category.findMany({
+      where:  { id: { in: categoryIds } },
+      select: { id: true, name: true },
+    });
+    const catMap = new Map(categories.map((c) => [c.id, c.name]));
+
+    const total = grouped.reduce((sum, g) => sum + Number(g._sum.amount ?? 0), 0);
+
+    const items = grouped.map((g) => ({
+      categoryId:   g.categoryId,
+      categoryName: catMap.get(g.categoryId) ?? 'Sin categoría',
+      total:        Number(g._sum.amount ?? 0),
+      count:        g._count,
+      percentage:   total > 0 ? (Number(g._sum.amount ?? 0) / total) * 100 : 0,
+    }));
+
+    return { year, month, items, total };
+  }
+
   // ─── CALENDARIO: totales diarios de ingresos y gastos ───────────────────
 
   async getCalendar(userId: string, year: number, month: number) {

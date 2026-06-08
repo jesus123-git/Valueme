@@ -10,13 +10,15 @@
 import { formatCurrency } from '@/lib/utils';
 import { FinancialTrafficLight } from './FinancialTrafficLight';
 import type { DashboardData } from '@/types/dashboard.types';
+import type { CategoryStatItem } from '@/hooks/useCategoryStats';
 
 interface Props {
-  data:      DashboardData;
-  userName?: string | null;
+  data:           DashboardData;
+  userName?:      string | null;
+  topCategories?: CategoryStatItem[];   // Top gastos del mes (Etapa 3)
 }
 
-export function AIAdvisorCard({ data, userName }: Props) {
+export function AIAdvisorCard({ data, userName, topCategories }: Props) {
   const { totalIncome, totalExpense } = data;
   const firstName = userName?.split(' ')[0] ?? 'usuario';
   const net        = totalIncome - totalExpense;
@@ -32,6 +34,10 @@ export function AIAdvisorCard({ data, userName }: Props) {
     const savingsPct = ((net / totalIncome) * 100).toFixed(0);
     lines.push(`¡Hola ${firstName}! Tu balance del período es positivo. 💪`);
     lines.push(`Ingresaste ${formatCurrency(totalIncome)} y gastaste ${formatCurrency(totalExpense)} — un ahorro del ${savingsPct} %.`);
+    if (topCategories && topCategories.length > 0) {
+      const top = topCategories[0];
+      lines.push(`Tu mayor gasto del mes es "${top.categoryName}" con ${formatCurrency(top.total)} (${top.percentage.toFixed(0)} % del total).`);
+    }
     if (Number(savingsPct) >= 20) {
       lines.push('Excelente disciplina financiera. Considera mover parte del ahorro a tus metas.');
     } else {
@@ -41,6 +47,10 @@ export function AIAdvisorCard({ data, userName }: Props) {
     const overPct = totalIncome > 0 ? (((totalExpense - totalIncome) / totalIncome) * 100).toFixed(0) : '0';
     lines.push(`¡Hola ${firstName}! Este período tus gastos superaron tus ingresos. ⚠️`);
     lines.push(`Gastaste ${formatCurrency(totalExpense - totalIncome)} más de lo que ingresaste (${overPct} % extra).`);
+    if (topCategories && topCategories.length > 0) {
+      const top = topCategories[0];
+      lines.push(`La categoría "${top.categoryName}" concentra el ${top.percentage.toFixed(0)} % de tus gastos (${formatCurrency(top.total)}).`);
+    }
     lines.push('Revisa tus movimientos y considera ajustar los gastos variables.');
   }
 
