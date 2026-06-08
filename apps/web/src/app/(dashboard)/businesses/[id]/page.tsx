@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Business, DashboardKPIs } from '@/types';
 import Link from 'next/link';
-import { ArrowLeft, Users, FileText, TrendingUp, TrendingDown, DollarSign, ArrowRightLeft, Package } from 'lucide-react';
+import { ArrowLeft, Users, FileText, TrendingUp, TrendingDown, DollarSign, ArrowRightLeft, Package, Tag, ClipboardList } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useEffect } from 'react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -76,7 +76,7 @@ export default function BusinessDetailPage() {
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCOP(kpis?.currentMonth.expenses ?? 0)}</p>
             </div>
 
-            <div className={`bg-white dark:bg-gray-900 rounded-xl border p-5 ${(kpis?.currentMonth.profit ?? 0) >= 0 ? 'border-green-100 dark:border-green-900' : 'border-red-100 dark:border-red-900'}`}>
+            <div className={`bg-white dark:bg-gray-900 rounded-xl border p-5 transition-colors ${(kpis?.currentMonth.profit ?? 0) >= 0 ? 'border-green-200 dark:border-green-800/50' : 'border-red-200 dark:border-red-800/50'}`}>
               <div className="flex items-center gap-3 mb-3">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${(kpis?.currentMonth.profit ?? 0) >= 0 ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-red-50 dark:bg-red-900/30'}`}>
                   <DollarSign size={18} className={(kpis?.currentMonth.profit ?? 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-500 dark:text-red-400'} />
@@ -87,6 +87,7 @@ export default function BusinessDetailPage() {
                 {formatCOP(kpis?.currentMonth.profit ?? 0)}
               </p>
             </div>
+
           </div>
         </div>
 
@@ -104,7 +105,7 @@ export default function BusinessDetailPage() {
         {/* Accesos rápidos */}
         <div>
           <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Gestionar</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <Link
               href={`/businesses/${id}/transactions`}
               className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-sm transition flex items-center gap-4"
@@ -115,6 +116,19 @@ export default function BusinessDetailPage() {
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">Transacciones</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500">{business?._count?.transactions ?? 0} registradas</p>
+              </div>
+            </Link>
+
+            <Link
+              href={`/businesses/${id}/price-lists`}
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-sm transition flex items-center gap-4"
+            >
+              <div className="w-10 h-10 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+                <Tag size={20} className="text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">Precios</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Listas de precios</p>
               </div>
             </Link>
 
@@ -141,6 +155,19 @@ export default function BusinessDetailPage() {
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">Productos</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500">Catálogo de precios</p>
+              </div>
+            </Link>
+
+            <Link
+              href={`/businesses/${id}/quotes`}
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-sm transition flex items-center gap-4"
+            >
+              <div className="w-10 h-10 bg-teal-50 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
+                <ClipboardList size={20} className="text-teal-600 dark:text-teal-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">Cotizaciones</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Presupuestos</p>
               </div>
             </Link>
 
