@@ -3,6 +3,7 @@
 
 # Build output
 backend/dist/
+**/*.tsbuildinfo
 
 # Environment files
 .env
