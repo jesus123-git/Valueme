@@ -76,7 +76,7 @@ export default function BusinessDetailPage() {
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCOP(kpis?.currentMonth.expenses ?? 0)}</p>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
+            <div className={`bg-white dark:bg-gray-900 rounded-xl border p-5 transition-colors ${(kpis?.currentMonth.profit ?? 0) >= 0 ? 'border-green-200 dark:border-green-800/50' : 'border-red-200 dark:border-red-800/50'}`}>
               <div className="flex items-center gap-3 mb-3">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${(kpis?.currentMonth.profit ?? 0) >= 0 ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-red-50 dark:bg-red-900/30'}`}>
                   <DollarSign size={18} className={(kpis?.currentMonth.profit ?? 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-500 dark:text-red-400'} />
@@ -87,6 +87,7 @@ export default function BusinessDetailPage() {
                 {formatCOP(kpis?.currentMonth.profit ?? 0)}
               </p>
             </div>
+
           </div>
         </div>
 
