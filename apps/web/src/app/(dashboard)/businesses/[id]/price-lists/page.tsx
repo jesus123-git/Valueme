@@ -129,9 +129,9 @@ export default function PriceListsPage() {
           </div>
           <button
             onClick={() => toggleMutation.mutate(!usePriceLists)}
-            className={`relative w-12 h-6 rounded-full transition-colors ${usePriceLists ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'}`}
+            className={`relative inline-flex w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${usePriceLists ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}
           >
-            <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${usePriceLists ? 'translate-x-7' : 'translate-x-1'}`} />
+            <span className={`inline-block w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-200 mt-0.5 ${usePriceLists ? 'translate-x-5' : 'translate-x-0.5'}`} />
           </button>
         </div>
 
