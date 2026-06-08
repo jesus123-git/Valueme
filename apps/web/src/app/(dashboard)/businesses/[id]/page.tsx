@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Business, DashboardKPIs } from '@/types';
 import Link from 'next/link';
-import { ArrowLeft, Users, FileText, TrendingUp, TrendingDown, DollarSign, ArrowRightLeft, Package, Tag, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Users, FileText, TrendingUp, TrendingDown, DollarSign, ArrowRightLeft, Package, Tag, ClipboardList, Truck, ShoppingCart } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useEffect } from 'react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -105,7 +105,7 @@ export default function BusinessDetailPage() {
         {/* Accesos rápidos */}
         <div>
           <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Gestionar</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <Link
               href={`/businesses/${id}/transactions`}
               className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-sm transition flex items-center gap-4"
@@ -155,6 +155,32 @@ export default function BusinessDetailPage() {
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">Productos</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500">Catálogo de precios</p>
+              </div>
+            </Link>
+
+            <Link
+              href={`/businesses/${id}/suppliers`}
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-sm transition flex items-center gap-4"
+            >
+              <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                <Truck size={20} className="text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">Proveedores</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Directorio</p>
+              </div>
+            </Link>
+
+            <Link
+              href={`/businesses/${id}/purchases`}
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-sm transition flex items-center gap-4"
+            >
+              <div className="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 rounded-lg flex items-center justify-center">
+                <ShoppingCart size={20} className="text-rose-600 dark:text-rose-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">Compras</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Órdenes de compra</p>
               </div>
             </Link>
 
