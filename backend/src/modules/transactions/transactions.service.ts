@@ -218,6 +218,56 @@ export class TransactionsService {
     };
   }
 
+  // ─── CALENDARIO: totales diarios de ingresos y gastos ───────────────────
+
+  async getCalendar(userId: string, year: number, month: number) {
+    // Ampliamos el rango UTC ±1 día para cubrir el desfase Colombia (UTC-5).
+    // Luego filtramos por día real en hora Colombia al agrupar.
+    const start = new Date(Date.UTC(year, month - 1, 0, 12, 0, 0));   // Último día del mes previo 12:00 UTC
+    const end   = new Date(Date.UTC(year, month,     2, 12, 0, 0));   // 2do día del mes siguiente 12:00 UTC
+
+    const txs = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        type: { in: [TransactionType.INCOME, TransactionType.EXPENSE] },
+        date: { gte: start, lte: end },
+      },
+      select: { date: true, amount: true, type: true },
+      orderBy: { date: 'asc' },
+    });
+
+    // Formateador de fecha en zona horaria de Bogotá (UTC-5, sin DST)
+    const bogota = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Bogota',
+      year:  'numeric',
+      month: 'numeric',
+      day:   'numeric',
+    });
+
+    const days: Record<string, { income: number; expense: number; count: number }> = {};
+
+    for (const tx of txs) {
+      const parts  = bogota.formatToParts(tx.date);
+      const txYear  = parseInt(parts.find(p => p.type === 'year')!.value,  10);
+      const txMonth = parseInt(parts.find(p => p.type === 'month')!.value, 10);
+      const txDay   = parseInt(parts.find(p => p.type === 'day')!.value,   10);
+
+      // Solo incluir transacciones del mes y año solicitados
+      if (txYear !== year || txMonth !== month) continue;
+
+      const key = txDay.toString();
+      if (!days[key]) days[key] = { income: 0, expense: 0, count: 0 };
+      days[key].count++;
+      if (tx.type === TransactionType.INCOME) {
+        days[key].income += Number(tx.amount);
+      } else {
+        days[key].expense += Number(tx.amount);
+      }
+    }
+
+    return { year, month, days };
+  }
+
   // ─── ELIMINAR (con reversión de balance) ─────────────────────────────────
 
   async remove(userId: string, transactionId: string) {

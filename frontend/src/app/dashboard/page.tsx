@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth.context';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -13,6 +13,7 @@ import { AccountsList } from '@/components/dashboard/AccountsList';
 import { TransactionsList } from '@/components/dashboard/TransactionsList';
 import { AIAdvisorCard } from '@/components/dashboard/AIAdvisorCard';
 import { ComingSoonTile } from '@/components/dashboard/ComingSoonTile';
+import { CashflowCalendar } from '@/components/calendar/CashflowCalendar';
 import { BankSimulatorPanel } from '@/components/dashboard/BankSimulatorPanel';
 import { NewTransactionModal } from '@/components/transactions/NewTransactionModal';
 import { CreateAccountModal } from '@/components/accounts/CreateAccountModal';
@@ -56,12 +57,17 @@ export default function DashboardPage() {
     applyOptimistic, revertOptimistic, confirmOptimistic,
   } = useDashboard();
 
-  const [modalOpen,   setModalOpen]   = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
+  const [modalOpen,       setModalOpen]       = useState(false);
+  const [accountOpen,     setAccountOpen]     = useState(false);
+  const [calendarSignal,  setCalendarSignal]  = useState(0);
   const { toasts, toast, dismissToast } = useToast();
 
-  // Polling de webhooks: refresca automáticamente cuando llega un SMS real
-  useWebhookPoll(refetch);
+  // Polling de webhooks: refresca dashboard Y el calendario cuando llega un SMS
+  const handleRefresh = useCallback(() => {
+    refetch();
+    setCalendarSignal(s => s + 1);
+  }, [refetch]);
+  useWebhookPoll(handleRefresh);
 
   // Saludo dependiente de la hora — inicializa vacío para evitar hidratación mismatch
   const [greeting, setGreeting] = useState('');
@@ -286,15 +292,11 @@ export default function DashboardPage() {
             </BentoCard>
           </div>
 
-          {/* ── Fila 4: Placeholders Calendario + Análisis ──────────────── */}
+          {/* ── Fila 4: Calendario (real) + Análisis (placeholder) ─────── */}
           <div className="col-span-1 lg:col-span-7">
-            <ComingSoonTile
-              icon="📅"
-              title="Calendario de Flujo de Caja"
-              description="Vista mensual interactiva con ingresos y gastos por día. Haz clic en cualquier día para ver el detalle de sus movimientos."
-              step="Etapa 2"
-              minHeight="min-h-[220px]"
-            />
+            <BentoCard className="p-5 h-full">
+              <CashflowCalendar refreshSignal={calendarSignal} />
+            </BentoCard>
           </div>
 
           <div className="col-span-1 lg:col-span-5">

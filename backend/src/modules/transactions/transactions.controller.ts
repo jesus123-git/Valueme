@@ -25,6 +25,7 @@ import { TransactionType } from '@prisma/client';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionsDto } from './dto/filter-transactions.dto';
+import { CalendarQueryDto } from './dto/calendar-query.dto';
 import { PaginatedTransactionsDto, TransactionResponseDto } from './dto/transaction-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -82,6 +83,24 @@ export class TransactionsController {
     @Query() filters: FilterTransactionsDto,
   ): Promise<PaginatedTransactionsDto> {
     return this.transactionsService.findAll(user.id, filters);
+  }
+
+  // ─── GET /api/v1/transactions/calendar?year=2026&month=6 ─────────────────
+
+  @Get('calendar')
+  @ApiOperation({
+    summary: 'Totales diarios de ingresos y gastos para un mes completo',
+    description:
+      'Devuelve un mapa `{ days: { "1": { income, expense, count }, … } }` ' +
+      'con los agregados de cada día del mes en hora Colombia (UTC-5).',
+  })
+  @ApiQuery({ name: 'year',  required: true, type: Number, example: 2026 })
+  @ApiQuery({ name: 'month', required: true, type: Number, example: 6 })
+  calendar(
+    @CurrentUser() user: { id: string },
+    @Query() query: CalendarQueryDto,
+  ) {
+    return this.transactionsService.getCalendar(user.id, query.year, query.month);
   }
 
   // ─── DELETE /api/v1/transactions/:id ─────────────────────────────────────
