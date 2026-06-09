@@ -116,7 +116,7 @@ export default function PersonalPage() {
               </button>
             )}
 
-            <div className="pl-1 border-l border-slate-200 dark:border-slate-700">
+            <div className="pl-3 border-l border-slate-200 dark:border-slate-700 flex items-center">
               <UserMenu />
             </div>
           </div>

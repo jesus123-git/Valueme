@@ -168,7 +168,7 @@ export default function BusinessDashboardPage() {
             >
               ← Mis empresas
             </Link>
-            <div className="pl-2 border-l border-slate-200 dark:border-slate-700">
+            <div className="pl-3 border-l border-slate-200 dark:border-slate-700 flex items-center">
               <UserMenu />
             </div>
           </div>

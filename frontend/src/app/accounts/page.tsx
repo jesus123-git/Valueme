@@ -120,7 +120,7 @@ export default function AccountsPage() {
               <span className="hidden sm:inline">Nueva cuenta</span>
             </Button>
 
-            <div className="pl-1 border-l border-slate-200 dark:border-slate-700">
+            <div className="pl-3 border-l border-slate-200 dark:border-slate-700 flex items-center">
               <UserMenu />
             </div>
           </div>
