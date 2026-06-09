@@ -1,10 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // ── Seguridad: headers HTTP ───────────────────────────────────────────────
+  // Helmet añade: X-Content-Type-Options, X-Frame-Options, HSTS,
+  // Content-Security-Policy, X-XSS-Protection y otros headers de defensa.
+  app.use(helmet());
 
   app.setGlobalPrefix('api/v1');
 
@@ -16,8 +22,12 @@ async function bootstrap() {
     }),
   );
 
+  // ── CORS: solo acepta el origen del frontend configurado ──────────────────
   app.enableCors({
     origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   });
 
   const config = new DocumentBuilder()

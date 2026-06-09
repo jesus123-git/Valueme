@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiBearerAuth,
   ApiConflictResponse,
@@ -23,6 +24,7 @@ export class AuthController {
   // ─── POST /api/v1/auth/register ───────────────────────────────────────────
 
   @Post('register')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } }) // máx 5 registros / min por IP
   @ApiOperation({ summary: 'Registrar un nuevo usuario' })
   @ApiCreatedResponse({ type: AuthResponseDto, description: 'Usuario creado y token emitido' })
   @ApiConflictResponse({ description: 'El email ya está registrado' })
@@ -33,7 +35,8 @@ export class AuthController {
   // ─── POST /api/v1/auth/login ──────────────────────────────────────────────
 
   @Post('login')
-  @HttpCode(HttpStatus.OK)  // Por defecto POST devuelve 201; login debe devolver 200
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60_000, limit: 5 } }) // máx 5 intentos / min por IP — anti fuerza bruta
   @ApiOperation({ summary: 'Iniciar sesión con email y contraseña' })
   @ApiOkResponse({ type: AuthResponseDto, description: 'Login exitoso, token JWT emitido' })
   @ApiUnauthorizedResponse({ description: 'Credenciales incorrectas' })
