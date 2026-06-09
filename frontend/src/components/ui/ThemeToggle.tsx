@@ -1,109 +1,102 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const STORAGE_KEY = 'finanzas-theme';
 
-/** Lee el tema actual desde localStorage (fuente de verdad de next-themes) */
-function readThemeFromStorage(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === 'dark';
-  } catch {
-    return document.documentElement.classList.contains('dark');
-  }
-}
-
 interface Props {
   className?: string;
 }
 
+/**
+ * ThemeToggle — botón para alternar entre modo claro y oscuro.
+ *
+ * Los íconos y colores del botón se controlan con clases `dark:` de Tailwind,
+ * NO con estado React, para que siempre reflejen el estado real del DOM sin
+ * depender de efectos, temporizadores ni sync con next-themes.
+ */
 export function ThemeToggle({ className }: Props) {
-  const [isDark,  setIsDark]  = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const readDark = () => root.classList.contains('dark');
-
-    // 1. Montar observer ANTES de leer el estado inicial,
-    //    para no perder cambios que ocurran entre la lectura y el render.
-    const observer = new MutationObserver(() => setIsDark(readDark()));
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-
-    // 2. Leer el estado: primero localStorage (next-themes lo escribe aquí),
-    //    con classList como fallback.
-    setIsDark(readThemeFromStorage());
-    setMounted(true);
-
-    // 3. Re-leer en el siguiente frame, por si next-themes aplica la clase
-    //    en su propio useEffect (que corre después del nuestro).
-    const raf = requestAnimationFrame(() => setIsDark(readDark()));
-
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div
-        className={cn('h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse', className)}
-        aria-hidden
-      />
-    );
-  }
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   const handleToggle = () => {
     const root = document.documentElement;
-    // Leer el DOM directo — no depende del estado React
-    const nowDark = root.classList.contains('dark');
-    const next    = nowDark ? 'light' : 'dark';
+    const isDarkNow = root.classList.contains('dark');
+    const next      = isDarkNow ? 'light' : 'dark';
 
     root.classList.remove('light', 'dark');
     root.classList.add(next);
 
     try { localStorage.setItem(STORAGE_KEY, next); } catch (_) {}
-    // El MutationObserver actualiza isDark automáticamente
   };
+
+  // Asegura que aria-label se actualice en cliente sin hydration-mismatch
+  useEffect(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+
+    const update = () => {
+      const dark = document.documentElement.classList.contains('dark');
+      btn.setAttribute('aria-label', dark ? 'Cambiar a modo día' : 'Cambiar a modo noche');
+      btn.setAttribute('title',      dark ? 'Modo día'           : 'Modo noche');
+    };
+
+    update();
+
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <button
+      ref={btnRef}
       onClick={handleToggle}
-      aria-label={isDark ? 'Cambiar a modo día' : 'Cambiar a modo noche'}
-      title={isDark ? 'Modo día' : 'Modo noche'}
+      aria-label="Cambiar tema"
+      title="Cambiar tema"
       className={cn(
+        // Tamaño y forma
         'relative w-9 h-9 rounded-full flex items-center justify-center',
+        // Borde y transición
         'border transition-colors duration-300',
+        // Focus
         'focus:outline-none focus:ring-2 focus:ring-offset-2',
-        isDark
-          ? 'bg-slate-700 border-slate-600 text-amber-300 hover:bg-slate-600 focus:ring-amber-400 focus:ring-offset-slate-900'
-          : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200 focus:ring-slate-400',
+        // Colores — modo claro
+        'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200',
+        'focus:ring-slate-400',
+        // Colores — modo oscuro (dark: clases CSS, igual que todo el resto de la UI)
+        'dark:bg-slate-700 dark:border-slate-600 dark:text-amber-300 dark:hover:bg-slate-600',
+        'dark:focus:ring-amber-400 dark:focus:ring-offset-slate-900',
         className,
       )}
     >
-      {/* ☀️ visible en modo oscuro */}
+      {/* ☀️ sol — oculto en claro, visible en oscuro */}
       <span
-        className="absolute inset-0 flex items-center justify-center transition-all duration-300"
-        style={{
-          opacity:   isDark ? 1 : 0,
-          transform: isDark ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.5)',
-          pointerEvents: 'none',
-        }}
+        className={cn(
+          'absolute inset-0 flex items-center justify-center',
+          'transition-all duration-300',
+          // En modo claro: invisible y rotado
+          'opacity-0 -rotate-90 scale-50',
+          // En modo oscuro: visible y normal
+          'dark:opacity-100 dark:rotate-0 dark:scale-100',
+        )}
+        aria-hidden
       >
         <Sun size={16} />
       </span>
 
-      {/* 🌙 visible en modo claro */}
+      {/* 🌙 luna — visible en claro, oculta en oscuro */}
       <span
-        className="absolute inset-0 flex items-center justify-center transition-all duration-300"
-        style={{
-          opacity:   isDark ? 0 : 1,
-          transform: isDark ? 'rotate(90deg) scale(0.5)' : 'rotate(0deg) scale(1)',
-          pointerEvents: 'none',
-        }}
+        className={cn(
+          'absolute inset-0 flex items-center justify-center',
+          'transition-all duration-300',
+          // En modo claro: visible y normal
+          'opacity-100 rotate-0 scale-100',
+          // En modo oscuro: invisible y rotado
+          'dark:opacity-0 dark:rotate-90 dark:scale-50',
+        )}
+        aria-hidden
       >
         <Moon size={16} />
       </span>
