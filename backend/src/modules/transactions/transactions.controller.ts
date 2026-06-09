@@ -25,6 +25,8 @@ import { TransactionType } from '@prisma/client';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionsDto } from './dto/filter-transactions.dto';
+import { CalendarQueryDto } from './dto/calendar-query.dto';
+import { BulkImportDto } from './dto/bulk-import.dto';
 import { PaginatedTransactionsDto, TransactionResponseDto } from './dto/transaction-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -82,6 +84,63 @@ export class TransactionsController {
     @Query() filters: FilterTransactionsDto,
   ): Promise<PaginatedTransactionsDto> {
     return this.transactionsService.findAll(user.id, filters);
+  }
+
+  // ─── GET /api/v1/transactions/calendar?year=2026&month=6 ─────────────────
+
+  @Get('calendar')
+  @ApiOperation({
+    summary: 'Totales diarios de ingresos y gastos para un mes completo',
+    description:
+      'Devuelve un mapa `{ days: { "1": { income, expense, count }, … } }` ' +
+      'con los agregados de cada día del mes en hora Colombia (UTC-5).',
+  })
+  @ApiQuery({ name: 'year',  required: true, type: Number, example: 2026 })
+  @ApiQuery({ name: 'month', required: true, type: Number, example: 6 })
+  calendar(
+    @CurrentUser() user: { id: string },
+    @Query() query: CalendarQueryDto,
+  ) {
+    return this.transactionsService.getCalendar(user.id, query.year, query.month);
+  }
+
+  // ─── POST /api/v1/transactions/bulk ──────────────────────────────────────
+
+  @Post('bulk')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Importar lote de transacciones (desde Excel)',
+    description:
+      'Inserta hasta 1000 transacciones en una sola operación atómica. ' +
+      'Actualiza el balance de la cuenta automáticamente. ' +
+      'Solo se permiten tipos INCOME y EXPENSE.',
+  })
+  @ApiCreatedResponse({
+    schema: { example: { inserted: 120, accountName: 'Nequi Personal' } },
+  })
+  bulkImport(
+    @CurrentUser() user: { id: string },
+    @Body() dto: BulkImportDto,
+  ) {
+    return this.transactionsService.bulkImport(user.id, dto);
+  }
+
+  // ─── GET /api/v1/transactions/summary/categories?year=2026&month=6 ───────
+
+  @Get('summary/categories')
+  @ApiOperation({
+    summary: 'Gastos del mes agrupados por categoría (para gráfica de dona)',
+    description:
+      'Devuelve `{ items: [{ categoryId, categoryName, total, count, percentage }], total }`. ' +
+      'Solo incluye transacciones de tipo EXPENSE.',
+  })
+  @ApiQuery({ name: 'year',  required: true, type: Number, example: 2026 })
+  @ApiQuery({ name: 'month', required: true, type: Number, example: 6 })
+  categoryStats(
+    @CurrentUser() user: { id: string },
+    @Query() query: CalendarQueryDto,
+  ) {
+    return this.transactionsService.getCategoryStats(user.id, query.year, query.month);
   }
 
   // ─── DELETE /api/v1/transactions/:id ─────────────────────────────────────

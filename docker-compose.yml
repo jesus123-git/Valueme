@@ -53,6 +53,7 @@ services:
       FRONTEND_URL: http://localhost:3000
       JWT_SECRET: ${JWT_SECRET:-dev_secret_cambia_en_produccion_32chars}
       JWT_EXPIRES_IN: 7d
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-nequi_bancolombia_secret_2026}
     ports:
       - "3001:3001"
     volumes:
@@ -71,6 +72,7 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3001
       INTERNAL_API_URL: http://backend:3001
+      NEXT_PUBLIC_WEBHOOK_SECRET: ${WEBHOOK_SECRET:-nequi_bancolombia_secret_2026}
     ports:
       - "3000:3000"
     volumes:

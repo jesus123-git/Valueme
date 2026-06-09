@@ -9,6 +9,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { balanceDeltaForAccount } from '../../common/utils/balance.utils';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionsDto } from './dto/filter-transactions.dto';
+import { BulkImportDto } from './dto/bulk-import.dto';
 
 // ─── Parámetros para creación interna (webhooks, seeds, etc.) ────────────────
 
@@ -216,6 +217,144 @@ export class TransactionsService {
       totalIncome,
       totalExpense,
     };
+  }
+
+  // ─── IMPORTACIÓN MASIVA desde Excel ─────────────────────────────────────
+
+  async bulkImport(userId: string, dto: BulkImportDto) {
+    // 1. Validar ownership de cuenta y categoría antes de escribir
+    const [account] = await Promise.all([
+      this.assertAccountOwnership(userId, dto.bankAccountId),
+      this.assertCategoryOwnership(userId, dto.categoryId),
+    ]);
+
+    // 2. Preparar registros
+    const data = dto.rows.map((row) => ({
+      amount:        row.amount,
+      description:   row.description,
+      type:          row.type,
+      date:          new Date(row.date),
+      bankAccountId: dto.bankAccountId,
+      categoryId:    dto.categoryId,
+      userId,
+    }));
+
+    // 3. Insertar todo en una transacción atómica y actualizar balance
+    const inserted = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const { count } = await tx.transaction.createMany({ data });
+
+      // Calcular el delta neto de balance para la cuenta
+      const delta = data.reduce(
+        (sum, row) => sum + balanceDeltaForAccount(row.type, row.amount, true),
+        0,
+      );
+
+      if (delta !== 0) {
+        await tx.bankAccount.update({
+          where: { id: dto.bankAccountId },
+          data:  { balance: { increment: delta } },
+        });
+      }
+
+      return count;
+    });
+
+    return { inserted, accountName: account.name };
+  }
+
+  // ─── RESUMEN POR CATEGORÍA (para la gráfica de dona) ────────────────────
+
+  async getCategoryStats(userId: string, year: number, month: number) {
+    // Rango Colombia: primer y último día del mes a medianoche Bogotá (UTC-5)
+    const start = new Date(Date.UTC(year, month - 1, 1,  5, 0, 0, 0));
+    const end   = new Date(Date.UTC(year, month,     0, 28, 59, 59, 999)); // último día del mes 23:59:59 Bogotá
+
+    // Agrupar gastos por categoría
+    const grouped = await this.prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        userId,
+        type: TransactionType.EXPENSE,
+        date: { gte: start, lte: end },
+      },
+      _sum:   { amount: true },
+      _count: true,
+      orderBy: { _sum: { amount: 'desc' } },
+    });
+
+    if (grouped.length === 0) {
+      return { year, month, items: [], total: 0 };
+    }
+
+    // Obtener nombres de categorías en un solo query
+    const categoryIds = grouped.map((g) => g.categoryId);
+    const categories  = await this.prisma.category.findMany({
+      where:  { id: { in: categoryIds } },
+      select: { id: true, name: true },
+    });
+    const catMap = new Map(categories.map((c) => [c.id, c.name]));
+
+    const total = grouped.reduce((sum, g) => sum + Number(g._sum.amount ?? 0), 0);
+
+    const items = grouped.map((g) => ({
+      categoryId:   g.categoryId,
+      categoryName: catMap.get(g.categoryId) ?? 'Sin categoría',
+      total:        Number(g._sum.amount ?? 0),
+      count:        g._count,
+      percentage:   total > 0 ? (Number(g._sum.amount ?? 0) / total) * 100 : 0,
+    }));
+
+    return { year, month, items, total };
+  }
+
+  // ─── CALENDARIO: totales diarios de ingresos y gastos ───────────────────
+
+  async getCalendar(userId: string, year: number, month: number) {
+    // Ampliamos el rango UTC ±1 día para cubrir el desfase Colombia (UTC-5).
+    // Luego filtramos por día real en hora Colombia al agrupar.
+    const start = new Date(Date.UTC(year, month - 1, 0, 12, 0, 0));   // Último día del mes previo 12:00 UTC
+    const end   = new Date(Date.UTC(year, month,     2, 12, 0, 0));   // 2do día del mes siguiente 12:00 UTC
+
+    const txs = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        type: { in: [TransactionType.INCOME, TransactionType.EXPENSE] },
+        date: { gte: start, lte: end },
+      },
+      select: { date: true, amount: true, type: true },
+      orderBy: { date: 'asc' },
+    });
+
+    // Formateador de fecha en zona horaria de Bogotá (UTC-5, sin DST)
+    const bogota = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Bogota',
+      year:  'numeric',
+      month: 'numeric',
+      day:   'numeric',
+    });
+
+    const days: Record<string, { income: number; expense: number; count: number }> = {};
+
+    for (const tx of txs) {
+      const parts  = bogota.formatToParts(tx.date);
+      const txYear  = parseInt(parts.find(p => p.type === 'year')!.value,  10);
+      const txMonth = parseInt(parts.find(p => p.type === 'month')!.value, 10);
+      const txDay   = parseInt(parts.find(p => p.type === 'day')!.value,   10);
+
+      // Solo incluir transacciones del mes y año solicitados
+      if (txYear !== year || txMonth !== month) continue;
+
+      const key = txDay.toString();
+      if (!days[key]) days[key] = { income: 0, expense: 0, count: 0 };
+      days[key].count++;
+      if (tx.type === TransactionType.INCOME) {
+        days[key].income += Number(tx.amount);
+      } else {
+        days[key].expense += Number(tx.amount);
+      }
+    }
+
+    return { year, month, days };
   }
 
   // ─── ELIMINAR (con reversión de balance) ─────────────────────────────────
