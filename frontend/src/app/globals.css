@@ -16,9 +16,9 @@ html {
 *,
 *::before,
 *::after {
-  transition-property: background-color, border-color, color;
-  transition-duration: 200ms;
-  transition-timing-function: ease;
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 450ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Excluir elementos que no deben tener transición de color
