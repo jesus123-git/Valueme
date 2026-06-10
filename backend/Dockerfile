@@ -12,6 +12,8 @@ RUN npm install
 # ─── Stage 2: desarrollo (hot-reload con ts-node / nest cli) ─────────────────
 FROM base AS development
 COPY . .
+# Generar Prisma Client para que los tipos estén disponibles al compilar TS
+RUN npx prisma generate
 EXPOSE 3001
 CMD ["npm", "run", "start:dev"]
 
