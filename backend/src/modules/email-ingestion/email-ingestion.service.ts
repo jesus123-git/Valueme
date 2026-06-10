@@ -111,7 +111,9 @@ export class EmailIngestionService implements OnModuleDestroy {
       // para no perder emails nocturnos del día anterior)
       const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-      const searchResult = await client.search({ seen: false, since: since24h });
+      // { uid: true } → devuelve UIDs reales (no números de secuencia) para
+      // que fetchOne y messageFlagsAdd operen sobre el mismo identificador.
+      const searchResult = await client.search({ seen: false, since: since24h }, { uid: true });
       const uids: number[] = Array.isArray(searchResult) ? searchResult : [];
 
       if (uids.length === 0) {
@@ -141,10 +143,17 @@ export class EmailIngestionService implements OnModuleDestroy {
     cfg:     ImapConfig,
   ): Promise<void> {
     try {
-      // Descargar el mensaje completo en formato source (RFC 2822 raw)
-      const message = await client.fetchOne(String(uid), { source: true });
+      // Descargar el mensaje completo en formato source (RFC 2822 raw).
+      // { uid: true } porque el uid recibido es un UID real (no número de secuencia).
+      const message = await client.fetchOne(String(uid), { source: true }, { uid: true });
 
       if (!message) return;
+
+      // ── Marcar como LEÍDO antes de cualquier procesamiento ──────────────
+      // Esto previene que el próximo tick del cron vuelva a procesar el mismo
+      // email si la creación de transacciones tarda más de 30 s o falla a mitad.
+      // Es preferible perder un registro puntual que generar duplicados.
+      await client.messageFlagsAdd(String(uid), ['\\Seen'], { uid: true });
 
       // ── Extraer remitente del source raw para filtro temprano ───────────
       const rawSource   = message.source?.toString('utf8') ?? '';
@@ -156,18 +165,13 @@ export class EmailIngestionService implements OnModuleDestroy {
       const fromHeader  = this.extractHeader(headerBlock, 'from');
       const isBankEmail = this.isBankSender(fromHeader);
 
-      if (!isBankEmail) {
-        // Marcar como leído para no volver a procesarlo en futuros ticks
-        await client.messageFlagsAdd({ uid: String(uid) }, ['\\Seen']);
-        return;
-      }
+      if (!isBankEmail) return;
 
       // ── Extraer cuerpo texto-plano ──────────────────────────────────────
       const textBody = this.extractPlainText(rawSource);
 
       if (!textBody || textBody.trim().length < 10) {
         this.logger.verbose(`[email-ingestion] UID ${uid}: cuerpo vacío o muy corto — omitido`);
-        await client.messageFlagsAdd({ uid: String(uid) }, ['\\Seen']);
         return;
       }
 
@@ -180,7 +184,6 @@ export class EmailIngestionService implements OnModuleDestroy {
 
       if (!baseInfo.provider) {
         this.logger.verbose(`[email-ingestion] UID ${uid}: proveedor no reconocido — skip`);
-        await client.messageFlagsAdd({ uid: String(uid) }, ['\\Seen']);
         return;
       }
 
@@ -200,7 +203,6 @@ export class EmailIngestionService implements OnModuleDestroy {
         this.logger.warn(
           `[email-ingestion] UID ${uid}: cuenta ${provider} *${accountSuffix ?? '????'} no encontrada — omitido`,
         );
-        await client.messageFlagsAdd({ uid: String(uid) }, ['\\Seen']);
         return;
       }
 
@@ -212,7 +214,6 @@ export class EmailIngestionService implements OnModuleDestroy {
 
       if (txItems.length === 0) {
         this.logger.verbose(`[email-ingestion] UID ${uid}: ningún monto con tipo reconocible — skip`);
-        await client.messageFlagsAdd({ uid: String(uid) }, ['\\Seen']);
         return;
       }
 
@@ -238,9 +239,6 @@ export class EmailIngestionService implements OnModuleDestroy {
           `[email-ingestion] ✓ UID ${uid} | ${provider} ${item.type} $${item.amount.toLocaleString('es-CO')} → "${account.name}"`,
         );
       }
-
-      // ── Marcar como LEÍDO para evitar duplicados ─────────────────────────
-      await client.messageFlagsAdd({ uid: String(uid) }, ['\\Seen']);
 
     } catch (err) {
       this.logger.error(`[email-ingestion] Error procesando UID ${uid}:`, err);
