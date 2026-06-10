@@ -242,7 +242,7 @@ export class WebhooksService {
    *   Nequi:       "Nequi: Enviaste $15.000 a Maria L."
    *   Bancolombia: "Retiro Cajero $80.000 Cta Ahorros *1234"
    */
-  private parseText(text: string): ParsedSMS {
+  public parseText(text: string): ParsedSMS {
     // ── Proveedor ─────────────────────────────────────────────────────────
     let provider: 'NEQUI' | 'BANCOLOMBIA' | null = null;
     if (/bancolombia/i.test(text))  provider = 'BANCOLOMBIA';
@@ -291,7 +291,7 @@ export class WebhooksService {
    *   - Inglés:      "45,000"  → 45000   "45,000.00" → 45000
    *   - Mixto:       "1.234,00"→ 1234    "1,234.00"  → 1234
    */
-  private parseAmount(raw: string): number {
+  public parseAmount(raw: string): number {
     // Guardia defensiva: si raw no es un string o está vacío, devuelve 0.
     if (!raw || typeof raw !== 'string') return 0;
     const s        = raw.trim();
