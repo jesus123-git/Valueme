@@ -111,7 +111,8 @@ export class EmailIngestionService implements OnModuleDestroy {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const uids: number[] = await client.search({ seen: false, since: today });
+      const searchResult = await client.search({ seen: false, since: today });
+      const uids: number[] = Array.isArray(searchResult) ? searchResult : [];
 
       if (uids.length === 0) {
         this.logger.verbose('[email-ingestion] Sin mensajes nuevos.');
@@ -141,15 +142,13 @@ export class EmailIngestionService implements OnModuleDestroy {
   ): Promise<void> {
     try {
       // Descargar el mensaje completo en formato source (RFC 2822 raw)
-      const message = await client.fetchOne(String(uid), {
-        source:  true,
-        headers: ['from', 'subject', 'date'],
-      });
+      const message = await client.fetchOne(String(uid), { source: true });
 
       if (!message) return;
 
-      // ── Extraer remitente para filtro temprano ──────────────────────────
-      const fromHeader = (message.headers?.get('from') ?? '') as string;
+      // ── Extraer remitente del source raw para filtro temprano ───────────
+      const rawSource  = message.source?.toString('utf8') ?? '';
+      const fromHeader = this.extractHeader(rawSource.slice(0, 2000), 'from');
       const isBankEmail = this.isBankSender(fromHeader);
 
       if (!isBankEmail) {
@@ -159,8 +158,7 @@ export class EmailIngestionService implements OnModuleDestroy {
       }
 
       // ── Extraer cuerpo texto-plano ──────────────────────────────────────
-      const rawSource = message.source?.toString('utf8') ?? '';
-      const textBody  = this.extractPlainText(rawSource);
+      const textBody = this.extractPlainText(rawSource);
 
       if (!textBody || textBody.trim().length < 10) {
         this.logger.verbose(`[email-ingestion] UID ${uid}: cuerpo vacío o muy corto — omitido`);
@@ -384,9 +382,9 @@ export class EmailIngestionService implements OnModuleDestroy {
    */
   private async upsertCategory(userId: string, name: string) {
     return this.prisma.category.upsert({
-      where:  { userId_name: { userId, name } },
+      where:  { name_userId: { name, userId } },
       update: {},
-      create: { userId, name, icon: '🏦', color: '#22c55e' },
+      create: { userId, name },
     });
   }
 }
