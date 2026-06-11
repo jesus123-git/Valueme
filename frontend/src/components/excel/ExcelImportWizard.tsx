@@ -212,7 +212,7 @@ export function ExcelImportWizard({
   const [step,           setStep]          = useState<WizardStep>('upload');
   const [parsedFile,     setParsedFile]    = useState<ParsedFile | null>(null);
   const [mapping,        setMapping]       = useState<ColumnMapping>({ date: '', description: '', amount: '', type: '' });
-  const [accountId,      setAccountId]     = useState(accounts[0]?.id ?? '');
+  const [accountId,      setAccountId]     = useState(accounts?.[0]?.id ?? '');
   const [categoryId,     setCategoryId]    = useState('');
   const [categories,     setCategories]    = useState<Category[]>([]);
   const [importRows,     setImportRows]    = useState<ImportRow[]>([]);
@@ -266,6 +266,7 @@ export function ExcelImportWizard({
     try {
       const buffer = await file.arrayBuffer();
       const wb     = XLSX.read(buffer, { type: 'array', cellDates: true });
+      if (!wb.SheetNames.length) { setParseError('El archivo no contiene hojas de cálculo'); return; }
       const sheet  = wb.Sheets[wb.SheetNames[0]];
       const raw    = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
 
@@ -598,7 +599,7 @@ export function ExcelImportWizard({
                       onChange={e => setAccountId(e.target.value)}
                       className={cn('w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2', ringColor)}
                     >
-                      {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                      {(accounts ?? []).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
                   </div>
                   <div>

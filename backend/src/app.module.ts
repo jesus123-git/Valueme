@@ -27,6 +27,7 @@ import { ReportsModule }        from './modules/reports/reports.module';
 
 // ─── Módulo Email Ingestion ───────────────────────────────────────────────────
 import { EmailIngestionModule } from './modules/email-ingestion/email-ingestion.module';
+import { EmailConfigModule }    from './modules/email-config/email-config.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { EmailIngestionModule } from './modules/email-ingestion/email-ingestion.
 
     // Email Ingestion Engine (cron + IMAP)
     EmailIngestionModule,
+    EmailConfigModule,
   ],
   controllers: [AppController],
   providers: [

@@ -42,7 +42,7 @@ function BentoCell({ label, value, highlight = false }: { label: string; value: 
 export function DianConfirmModal({ open, invoice, accounts, saving, error, onCancel, onConfirm }: Props) {
   const [categories,    setCategories]    = useState<Category[]>([]);
   const [loadingCats,   setLoadingCats]   = useState(true);
-  const [selectedAcct,  setSelectedAcct]  = useState(accounts[0]?.id ?? '');
+  const [selectedAcct,  setSelectedAcct]  = useState(accounts?.[0]?.id ?? '');
   const [selectedCat,   setSelectedCat]   = useState('');
 
   // Cargar categorías al abrir el modal
@@ -110,7 +110,7 @@ export function DianConfirmModal({ open, invoice, accounts, saving, error, onCan
         {/* Cuenta */}
         <Select
           label="Cuenta a debitar"
-          options={accounts.map(a => ({
+          options={(accounts ?? []).map(a => ({
             value: a.id,
             label: `${a.name} · ${fmt(a.balance)}`,
           }))}

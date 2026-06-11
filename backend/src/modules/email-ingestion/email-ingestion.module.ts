@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EncryptionModule } from '../../common/encryption/encryption.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { EmailIngestionService } from './email-ingestion.service';
@@ -7,8 +8,9 @@ import { EmailIngestionService } from './email-ingestion.service';
 @Module({
   imports: [
     ScheduleModule,
-    WebhooksModule,      // exporta WebhooksService (motor parseText + parseAmount)
-    TransactionsModule,  // exporta TransactionsService para crear transacciones
+    EncryptionModule,
+    WebhooksModule,
+    TransactionsModule,
   ],
   providers: [EmailIngestionService],
 })
