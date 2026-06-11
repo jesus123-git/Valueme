@@ -82,9 +82,29 @@ model User {
   investments  Investment[]
 
   // Módulo empresarial
-  businesses   Business[]
+  businesses       Business[]
+
+  // Integración de correo
+  emailIntegration EmailIntegration?
 
   @@map("users")
+}
+
+// ─── Integración de correo por usuario ───────────────────────────────────────
+
+model EmailIntegration {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailUser     String
+  emailPassword String
+  emailHost     String   @default("imap.gmail.com")
+  emailPort     Int      @default(993)
+  emailMailbox  String   @default("INBOX")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("email_integrations")
 }
 
 // ─── Módulo Personal: Cuentas ─────────────────────────────────────────────────

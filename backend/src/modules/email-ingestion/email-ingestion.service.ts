@@ -1,32 +1,9 @@
-/**
- * EmailIngestionService
- *
- * Motor de ingesta de correos bancarios (Nequi / Bancolombia).
- *
- * Flujo:
- *  1. Cron cada 30 segundos.
- *  2. Conecta por IMAP al buzón configurado en variables de entorno.
- *  3. Busca mensajes no-leídos del día actual.
- *  4. Para cada mensaje extrae el cuerpo en texto-plano.
- *  5. Pasa el texto al motor de regex de WebhooksService (parseText).
- *  6. Si reconoce proveedor + monto → busca la cuenta bancaria en BD.
- *  7. Crea la transacción usando el mismo TransactionsService que usan los webhooks SMS.
- *  8. Marca el mensaje como LEÍDO para evitar duplicados.
- *
- * Variables de entorno necesarias (todas opcionales — el servicio queda inactivo
- * si EMAIL_HOST no está definido):
- *   EMAIL_HOST      — servidor IMAP (ej: imap.gmail.com)
- *   EMAIL_PORT      — puerto IMAP (default: 993)
- *   EMAIL_USER      — correo electrónico
- *   EMAIL_PASSWORD  — contraseña o contraseña de aplicación
- *   EMAIL_MAILBOX   — buzón (default: INBOX)
- */
 
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../common/prisma/prisma.service';
-import { WebhooksService } from '../webhooks/webhooks.service';
+import { PrismaService }     from '../../common/prisma/prisma.service';
+import { EncryptionService } from '../../common/encryption/encryption.service';
+import { WebhooksService }   from '../webhooks/webhooks.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { TransactionType } from '@prisma/client';
 
@@ -51,12 +28,12 @@ interface ImapConfig {
 export class EmailIngestionService implements OnModuleDestroy {
   private readonly logger = new Logger(EmailIngestionService.name);
 
-  /** Cliente IMAP activo durante el tick del cron. Se cierra al finalizar. */
-  private activeClient: InstanceType<typeof ImapFlow> | null = null;
+  /** Evita ciclos de cron solapados mientras se itera sobre los usuarios */
+  private isRunning = false;
 
   constructor(
-    private readonly config:       ConfigService,
     private readonly prisma:       PrismaService,
+    private readonly encryption:   EncryptionService,
     private readonly webhooks:     WebhooksService,
     private readonly transactions: TransactionsService,
   ) {}
@@ -64,74 +41,78 @@ export class EmailIngestionService implements OnModuleDestroy {
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   async onModuleDestroy() {
-    if (this.activeClient) {
-      try { await this.activeClient.logout(); } catch (_) {}
-      this.activeClient = null;
-    }
+    this.isRunning = false;
   }
 
   // ── Cron: cada 30 segundos ───────────────────────────────────────────────────
 
   @Cron('*/30 * * * * *')
   async checkEmails(): Promise<void> {
-    const cfg = this.loadConfig();
-
-    // Si EMAIL_HOST no está configurado el módulo permanece inactivo en silencio.
-    if (!cfg) return;
-
-    // Evita tick solapado: si el cliente anterior aún está abierto, saltar.
-    if (this.activeClient) {
+    if (this.isRunning) {
       this.logger.warn('[email-ingestion] Tick solapado detectado — omitiendo ciclo.');
       return;
     }
 
+    const integrations = await this.prisma.emailIntegration.findMany();
+
+    if (integrations.length === 0) return;
+
+    this.isRunning = true;
+
+    try {
+      for (const integration of integrations) {
+        const cfg: ImapConfig = {
+          host:     integration.emailHost,
+          port:     integration.emailPort,
+          user:     integration.emailUser,
+          password: this.encryption.decrypt(integration.emailPassword),
+          mailbox:  integration.emailMailbox,
+          tls:      true,
+        };
+
+        await this.checkEmailsForUser(cfg, integration.userId);
+      }
+    } finally {
+      this.isRunning = false;
+    }
+  }
+
+  /** Procesa la bandeja IMAP de un usuario específico */
+  private async checkEmailsForUser(cfg: ImapConfig, userId: string): Promise<void> {
     const client = new ImapFlow({
       host:   cfg.host,
       port:   cfg.port,
       secure: cfg.tls,
-      auth: {
-        user: cfg.user,
-        pass: cfg.password,
-      },
-      // Silenciar el logger interno de imapflow — usamos el de NestJS
+      auth: { user: cfg.user, pass: cfg.password },
       logger: false,
     });
 
-    this.activeClient = client;
-
     try {
       await client.connect();
-      this.logger.verbose(`[email-ingestion] Conectado a ${cfg.host}:${cfg.port}`);
+      this.logger.verbose(`[email-ingestion] [${cfg.user}] Conectado a ${cfg.host}:${cfg.port}`);
 
-      // Abre el buzón en modo read-write para poder marcar mensajes
       const mailbox = await client.mailboxOpen(cfg.mailbox);
-      this.logger.verbose(`[email-ingestion] Buzón "${cfg.mailbox}" abierto — ${mailbox.exists} mensajes`);
+      this.logger.verbose(`[email-ingestion] [${cfg.user}] Buzón "${cfg.mailbox}" — ${mailbox.exists} mensajes`);
 
-      // Buscar no-leídos de las últimas 24h (no solo desde medianoche,
-      // para no perder emails nocturnos del día anterior)
       const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-      // { uid: true } → devuelve UIDs reales (no números de secuencia) para
-      // que fetchOne y messageFlagsAdd operen sobre el mismo identificador.
       const searchResult = await client.search({ seen: false, since: since24h }, { uid: true });
       const uids: number[] = Array.isArray(searchResult) ? searchResult : [];
 
       if (uids.length === 0) {
-        this.logger.verbose('[email-ingestion] Sin mensajes nuevos.');
+        this.logger.verbose(`[email-ingestion] [${cfg.user}] Sin mensajes nuevos.`);
         return;
       }
 
-      this.logger.log(`[email-ingestion] ${uids.length} mensaje(s) no-leído(s) encontrado(s)`);
+      this.logger.log(`[email-ingestion] [${cfg.user}] ${uids.length} mensaje(s) no-leído(s)`);
 
       for (const uid of uids) {
         await this.processEmail(client, uid, cfg);
       }
 
     } catch (err) {
-      this.logger.error('[email-ingestion] Error durante la ingesta:', err);
+      this.logger.error(`[email-ingestion] [${cfg.user}] Error durante la ingesta:`, err);
     } finally {
       try { await client.logout(); } catch (_) {}
-      this.activeClient = null;
     }
   }
 
@@ -246,24 +227,6 @@ export class EmailIngestionService implements OnModuleDestroy {
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
-
-  /**
-   * Carga la configuración IMAP desde variables de entorno.
-   * Devuelve null si EMAIL_HOST no está definido → el servicio queda inactivo.
-   */
-  private loadConfig(): ImapConfig | null {
-    const host = this.config.get<string>('EMAIL_HOST');
-    if (!host) return null;
-
-    return {
-      host,
-      port:     parseInt(this.config.get<string>('EMAIL_PORT') ?? '993', 10),
-      user:     this.config.get<string>('EMAIL_USER')     ?? '',
-      password: this.config.get<string>('EMAIL_PASSWORD') ?? '',
-      mailbox:  this.config.get<string>('EMAIL_MAILBOX')  ?? 'INBOX',
-      tls:      (this.config.get<string>('EMAIL_TLS') ?? 'true') !== 'false',
-    };
-  }
 
   /**
    * Filtro de remitente: solo procesa correos cuyo "From" contiene
