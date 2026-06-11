@@ -22,15 +22,18 @@ async function bootstrap() {
     }),
   );
 
-  // ── CORS: acepta los orígenes permitidos del frontend ────────────────────
+  // ── CORS: acepta producción, localhost y previews de Vercel ──────────────
   const allowedOrigins = [
     process.env.FRONTEND_URL,
     'http://localhost:3000',
   ].filter(Boolean) as string[];
 
+  // Acepta cualquier preview del equipo en Vercel (hash cambia por deploy)
+  const vercelPreviewRegex = /^https:\/\/finanzas-.*-nomi-s-projects4\.vercel\.app$/;
+
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || vercelPreviewRegex.test(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`CORS bloqueado para origen: ${origin}`));
