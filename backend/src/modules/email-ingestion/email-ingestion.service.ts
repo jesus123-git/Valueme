@@ -170,12 +170,16 @@ export class EmailIngestionService implements OnModuleDestroy {
 
       const provider = baseInfo.provider as 'NEQUI' | 'BANCOLOMBIA';
 
-      // Suplemento para emails de Bancolombia: "desde tu cuenta XXXX" (sin asterisco)
+      // Suplemento para emails de Bancolombia: extrae sufijo de cuenta del cuerpo del email
       let accountSuffix = baseInfo.accountSuffix;
       if (!accountSuffix && provider === 'BANCOLOMBIA') {
-        const emailSuffix = textBody.match(/(?:desde\s+tu\s+cuenta|cuenta\s+origen)\s+(\d{4})(?!\d)/i);
+        const emailSuffix =
+          textBody.match(/(?:desde\s+tu\s+cuenta|cuenta\s+origen)\s+(\d{4})/i) ??
+          textBody.match(/\bcuenta\s+(\d{4})\b/i) ??
+          textBody.match(/\*(\d{4})\b/);
         if (emailSuffix) accountSuffix = emailSuffix[1];
       }
+      this.logger.verbose(`[email-ingestion] UID ${uid} | provider=${provider} suffix=${accountSuffix} body="${textBody.slice(0, 120)}…"`);
 
       // ── Buscar cuenta bancaria en BD ─────────────────────────────────────
       const account = await this.resolveAccount(provider, accountSuffix);
@@ -255,7 +259,6 @@ export class EmailIngestionService implements OnModuleDestroy {
    *  3. Decodifica Base64 o Quoted-Printable si corresponde.
    */
   private extractPlainText(raw: string): string {
-    // ── Separar cabeceras del cuerpo ────────────────────────────────────────
     const headerBodySep = raw.indexOf('\r\n\r\n');
     const headerSection = headerBodySep !== -1 ? raw.slice(0, headerBodySep) : '';
     const bodySection   = headerBodySep !== -1 ? raw.slice(headerBodySep + 4) : raw;
@@ -269,6 +272,8 @@ export class EmailIngestionService implements OnModuleDestroy {
         const boundary = boundaryMatch[1].trim();
         const parts    = bodySection.split(new RegExp(`--${this.escapeRegex(boundary)}`, 'g'));
 
+        let htmlFallback = '';
+
         for (const part of parts) {
           const partSep = part.indexOf('\r\n\r\n');
           if (partSep === -1) continue;
@@ -276,23 +281,55 @@ export class EmailIngestionService implements OnModuleDestroy {
           const partHeaders = part.slice(0, partSep);
           const partBody    = part.slice(partSep + 4);
           const partType    = this.extractHeader(partHeaders, 'content-type');
+          const encoding    = this.extractHeader(partHeaders, 'content-transfer-encoding');
 
           if (/text\/plain/i.test(partType)) {
-            const encoding = this.extractHeader(partHeaders, 'content-transfer-encoding');
             return this.decodeBody(partBody, encoding).replace(/\r\n/g, '\n').trim();
           }
+          if (/text\/html/i.test(partType) && !htmlFallback) {
+            htmlFallback = this.decodeBody(partBody, encoding);
+          }
         }
+
+        // No había text/plain — usar el HTML decodificado y quitar los tags
+        if (htmlFallback) return this.stripHtml(htmlFallback);
       }
     }
 
-    // ── Mensaje simple (text/plain directo) ────────────────────────────────
+    // ── Mensaje simple ─────────────────────────────────────────────────────
     if (/text\/plain/i.test(contentType) || contentType === '') {
       const encoding = this.extractHeader(headerSection, 'content-transfer-encoding');
       return this.decodeBody(bodySection, encoding).replace(/\r\n/g, '\n').trim();
     }
 
-    // Fallback: devolver body en bruto (puede ser HTML)
-    return bodySection.replace(/\r\n/g, '\n').trim();
+    if (/text\/html/i.test(contentType)) {
+      const encoding = this.extractHeader(headerSection, 'content-transfer-encoding');
+      return this.stripHtml(this.decodeBody(bodySection, encoding));
+    }
+
+    // Último recurso: quitar tags del body en bruto
+    return this.stripHtml(bodySection);
+  }
+
+  /** Elimina tags HTML y decodifica entidades básicas para obtener texto plano */
+  private stripHtml(html: string): string {
+    return html
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<\/td>/gi, ' ')
+      .replace(/<\/tr>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   }
 
   /** Lee el valor de una cabecera específica (case-insensitive).
