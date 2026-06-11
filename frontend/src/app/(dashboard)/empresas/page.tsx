@@ -51,7 +51,14 @@ export default function EmpresasPage() {
     if (!formData.name.trim()) return;
     setCreating(true);
     try {
-      const biz = await apiPost<Business>('/businesses', formData);
+      // No enviar campos vacíos: el NIT es opcional y el backend espera
+      // undefined (no string vacío) cuando el usuario no lo diligencia
+      const payload = {
+        name: formData.name.trim(),
+        taxRegime: formData.taxRegime,
+        ...(formData.nit.trim() && { nit: formData.nit.trim() }),
+      };
+      const biz = await apiPost<Business>('/businesses', payload);
       toast(`Empresa "${biz.name}" creada 🎉`, 'success');
       setBusinesses(prev => [biz, ...prev]);
       setShowForm(false);
@@ -133,7 +140,10 @@ export default function EmpresasPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">NIT</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    NIT{' '}
+                    <span className="text-xs font-normal text-slate-400 dark:text-slate-500">(opcional)</span>
+                  </label>
                   <input
                     type="text"
                     value={formData.nit}
@@ -141,6 +151,9 @@ export default function EmpresasPage() {
                     placeholder="Ej: 900.123.456-7"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    ¿Aún no formalizas tu emprendimiento? Puedes agregarlo más adelante.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Régimen tributario</label>
