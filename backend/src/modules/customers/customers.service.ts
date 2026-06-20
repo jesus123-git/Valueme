@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { BusinessesService } from '../businesses/businesses.service';
+import { PlanService } from '../plan/plan.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
@@ -9,6 +10,7 @@ export class CustomersService {
   constructor(
     private prisma: PrismaService,
     private businessesService: BusinessesService,
+    private planService: PlanService,
   ) {}
 
   // ─── Crear cliente ────────────────────────────────────────────────────────────
@@ -16,6 +18,7 @@ export class CustomersService {
   async create(userId: string, businessId: string, dto: CreateCustomerDto) {
     // Verifica que la empresa existe y pertenece al usuario
     await this.businessesService.findOne(userId, businessId);
+    await this.planService.assertCanCreateCustomer(userId, businessId);
 
     return this.prisma.customer.create({
       data: { ...dto, businessId },
