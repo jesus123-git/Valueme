@@ -15,7 +15,7 @@ import { formatCurrency } from '@/lib/utils';
 import {
   TrendingUp, TrendingDown, DollarSign, Clock,
   Users, FileText, Package, ClipboardList,
-  Truck, ShoppingCart, Tag, BarChart2,
+  Truck, ShoppingCart, Tag, BarChart2, Users2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -91,6 +91,16 @@ const getNavItems = (id: string): NavItem[] => [
     icon: BarChart2,
     bg: 'bg-indigo-50 dark:bg-indigo-900/20', border: 'border-indigo-100 dark:border-indigo-800/40',
     iconBg: 'bg-indigo-100 dark:bg-indigo-800/40', iconCl: 'text-indigo-600 dark:text-indigo-400',
+  },
+  {
+    href: `/empresas/${id}/equipo`,
+    label: 'Equipo',
+    desc: 'Colaboradores y roles',
+    icon: Users2,
+    bg: 'bg-purple-50 dark:bg-purple-900/20',
+    border: 'border-purple-100 dark:border-purple-800/40',
+    iconBg: 'bg-purple-100 dark:bg-purple-800/40',
+    iconCl: 'text-purple-600 dark:text-purple-400',
   },
 ];
 
