@@ -47,7 +47,27 @@ export class PlanService {
       select: { userId: true },
     });
     if (!business) throw new NotFoundException('Empresa no encontrada');
-    if (business.userId !== userId) throw new ForbiddenException('NOT_A_MEMBER');
+    if (business.userId === userId) return;
+
+    const member = await this.prisma.businessMember.findUnique({
+      where: { businessId_userId: { businessId, userId } },
+    });
+    if (!member) throw new ForbiddenException('NOT_A_MEMBER');
+  }
+
+  async assertWriteAccess(userId: string, businessId: string): Promise<void> {
+    const business = await this.prisma.business.findUnique({
+      where: { id: businessId },
+      select: { userId: true },
+    });
+    if (!business) throw new NotFoundException('Empresa no encontrada');
+    if (business.userId === userId) return;
+
+    const member = await this.prisma.businessMember.findUnique({
+      where: { businessId_userId: { businessId, userId } },
+    });
+    if (!member) throw new ForbiddenException('NOT_A_MEMBER');
+    if (member.role === 'VIEWER') throw new ForbiddenException('VIEWER_CANNOT_WRITE');
   }
 
   async assertCanCreateInvoice(userId: string, businessId: string): Promise<void> {
