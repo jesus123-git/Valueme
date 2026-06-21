@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   User, Settings, Lock, HelpCircle, LogOut,
-  X, Check, Eye, EyeOff, Loader2,
+  X, Check, Eye, EyeOff, Loader2, Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth.context';
 import { apiPatch } from '@/lib/api';
@@ -205,6 +205,12 @@ export function UserMenu() {
       label: 'Cambiar contraseña',
       desc: 'Actualizar credenciales',
       action: () => { setModal('password'); setOpen(false); },
+    },
+    {
+      icon: Sparkles,
+      label: 'Planes',
+      desc: 'Ver y actualizar tu plan',
+      action: () => { setOpen(false); router.push('/planes'); },
     },
     {
       icon: Settings,

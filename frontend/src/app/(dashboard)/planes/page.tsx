@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Check, X, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/context/auth.context';
@@ -69,6 +69,7 @@ const PLANS = [
 
 function PlanesContent() {
   const { user } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const status = searchParams.get('status');
   const currentPlan = (user as any)?.plan ?? 'FREE';
@@ -78,9 +79,9 @@ function PlanesContent() {
       <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/personal" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+            <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
               <ArrowLeft size={20} />
-            </Link>
+            </button>
             <span className="font-semibold text-gray-900 dark:text-white">Planes</span>
           </div>
           <ThemeToggle />
