@@ -48,7 +48,7 @@ export class AuthService {
         passwordHash,
       },
       // select evita que el passwordHash salga en la respuesta
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, name: true, plan: true },
     });
 
     // 4. Crear las categorías por defecto en background.
@@ -67,6 +67,7 @@ export class AuthService {
     // 1. Buscar al usuario (incluimos passwordHash solo aquí, en el servicio)
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      select: { id: true, email: true, name: true, plan: true, passwordHash: true },
     });
 
     // 2. Verificar contraseña con tiempo constante (bcrypt.compare evita timing attacks)
@@ -82,6 +83,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
+      plan: user.plan,
     });
   }
 
@@ -122,12 +124,12 @@ export class AuthService {
 
   // ─── Helpers privados ─────────────────────────────────────────────────────
 
-  private buildTokenResponse(user: { id: string; email: string; name: string | null }) {
+  private buildTokenResponse(user: { id: string; email: string; name: string | null; plan: import('@prisma/client').PlanType }) {
     const payload: JwtPayload = { sub: user.id, email: user.email };
 
     return {
       accessToken: this.jwtService.sign(payload),
-      user,
+      user: { id: user.id, email: user.email, name: user.name, plan: user.plan },
     };
   }
 }

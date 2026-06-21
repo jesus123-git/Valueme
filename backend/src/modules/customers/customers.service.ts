@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { BusinessesService } from '../businesses/businesses.service';
+import { PlanService } from '../plan/plan.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
@@ -8,14 +8,14 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 export class CustomersService {
   constructor(
     private prisma: PrismaService,
-    private businessesService: BusinessesService,
+    private planService: PlanService,
   ) {}
 
   // ─── Crear cliente ────────────────────────────────────────────────────────────
 
   async create(userId: string, businessId: string, dto: CreateCustomerDto) {
-    // Verifica que la empresa existe y pertenece al usuario
-    await this.businessesService.findOne(userId, businessId);
+    await this.planService.assertWriteAccess(userId, businessId);
+    await this.planService.assertCanCreateCustomer(userId, businessId);
 
     return this.prisma.customer.create({
       data: { ...dto, businessId },
@@ -25,7 +25,7 @@ export class CustomersService {
   // ─── Listar clientes de una empresa ──────────────────────────────────────────
 
   async findAll(userId: string, businessId: string) {
-    await this.businessesService.findOne(userId, businessId);
+    await this.planService.assertBusinessAccess(userId, businessId);
 
     return this.prisma.customer.findMany({
       where: { businessId },
@@ -39,7 +39,7 @@ export class CustomersService {
   // ─── Obtener un cliente por ID ────────────────────────────────────────────────
 
   async findOne(userId: string, businessId: string, customerId: string) {
-    await this.businessesService.findOne(userId, businessId);
+    await this.planService.assertBusinessAccess(userId, businessId);
 
     const customer = await this.prisma.customer.findUnique({
       where: { id: customerId },

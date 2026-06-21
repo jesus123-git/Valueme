@@ -3,6 +3,11 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class InvoiceItemDto {
+  @ApiProperty({ example: 'uuid-producto', required: false })
+  @IsOptional()
+  @IsString()
+  productId?: string;
+
   @ApiProperty({ example: 'Desarrollo de sitio web' })
   @IsString()
   description: string;

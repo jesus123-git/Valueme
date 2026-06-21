@@ -4,6 +4,7 @@ export interface User {
   id: string;
   email: string;
   name: string | null;
+  plan: 'FREE' | 'PRO' | 'EMPRESA';
 }
 
 // ─── Payloads de peticiones ───────────────────────────────────────────────────

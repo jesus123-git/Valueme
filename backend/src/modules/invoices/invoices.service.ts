@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { BusinessesService } from '../businesses/businesses.service';
+import { ProductsService } from '../products/products.service';
+import { PlanService } from '../plan/plan.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceStatusDto } from './dto/update-invoice-status.dto';
 
@@ -8,7 +9,8 @@ import { UpdateInvoiceStatusDto } from './dto/update-invoice-status.dto';
 export class InvoicesService {
   constructor(
     private prisma: PrismaService,
-    private businessesService: BusinessesService,
+    private productsService: ProductsService,
+    private planService: PlanService,
   ) {}
 
   // ─── Generar número de factura automático ─────────────────────────────────────
@@ -22,7 +24,8 @@ export class InvoicesService {
   // ─── Crear factura ────────────────────────────────────────────────────────────
 
   async create(userId: string, businessId: string, dto: CreateInvoiceDto) {
-    await this.businessesService.findOne(userId, businessId);
+    await this.planService.assertWriteAccess(userId, businessId);
+    await this.planService.assertCanCreateInvoice(userId, businessId);
 
     if (!dto.items || dto.items.length === 0) {
       throw new BadRequestException('La factura debe tener al menos un ítem');
@@ -39,6 +42,7 @@ export class InvoicesService {
       totalTax += itemTax;
 
       return {
+        productId: item.productId ?? null,
         description: item.description,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
@@ -50,7 +54,7 @@ export class InvoicesService {
     const total = subtotal + totalTax;
     const number = await this.generateInvoiceNumber(businessId);
 
-    return this.prisma.invoice.create({
+    const invoice = await this.prisma.invoice.create({
       data: {
         businessId,
         customerId: dto.customerId,
@@ -69,12 +73,21 @@ export class InvoicesService {
         customer: { select: { id: true, name: true, email: true, nit: true } },
       },
     });
+
+    // Descontar inventario para los ítems vinculados a productos con trackInventory
+    await Promise.all(
+      dto.items
+        .filter(item => item.productId)
+        .map(item => this.productsService.adjustStock(item.productId!, item.quantity, 'subtract')),
+    );
+
+    return invoice;
   }
 
   // ─── Listar facturas de una empresa ──────────────────────────────────────────
 
   async findAll(userId: string, businessId: string) {
-    await this.businessesService.findOne(userId, businessId);
+    await this.planService.assertBusinessAccess(userId, businessId);
 
     return this.prisma.invoice.findMany({
       where: { businessId },
@@ -89,7 +102,7 @@ export class InvoicesService {
   // ─── Obtener una factura por ID ───────────────────────────────────────────────
 
   async findOne(userId: string, businessId: string, invoiceId: string) {
-    await this.businessesService.findOne(userId, businessId);
+    await this.planService.assertBusinessAccess(userId, businessId);
 
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: invoiceId },
@@ -134,7 +147,7 @@ export class InvoicesService {
   // ─── Resumen de cartera: cobros pendientes y vencidos ────────────────────────
 
   async getReceivables(userId: string, businessId: string) {
-    await this.businessesService.findOne(userId, businessId);
+    await this.planService.assertBusinessAccess(userId, businessId);
 
     const invoices = await this.prisma.invoice.findMany({
       where: {

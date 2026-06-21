@@ -65,7 +65,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Obtener el perfil del usuario autenticado' })
   @ApiOkResponse({ description: 'Datos del usuario autenticado' })
   @ApiUnauthorizedResponse({ description: 'Token inválido o ausente' })
-  getProfile(@CurrentUser() user: { id: string; email: string; name: string | null }) {
+  getProfile(@CurrentUser() user: { id: string; email: string; name: string | null; plan: string }) {
     return user;
   }
 

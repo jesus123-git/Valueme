@@ -1,16 +1,21 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { PlanService } from '../plan/plan.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { BulkImportBizDto } from './dto/bulk-import-biz.dto';
 
 @Injectable()
 export class BusinessesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private planService: PlanService,
+  ) {}
 
   // ─── Crear empresa ────────────────────────────────────────────────────────────
 
   async create(userId: string, dto: CreateBusinessDto) {
+    await this.planService.assertCanCreateBusiness(userId);
     return this.prisma.business.create({
       data: {
         ...dto,
@@ -33,19 +38,30 @@ export class BusinessesService {
   // ─── Listar empresas del usuario ──────────────────────────────────────────────
 
   async findAll(userId: string) {
-    return this.prisma.business.findMany({
-      where: { userId, isActive: true },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: {
-            customers: true,
-            invoices: true,
-            bizTransactions: true,
+    const [ownedBusinesses, memberBusinesses] = await Promise.all([
+      this.prisma.business.findMany({
+        where: { userId, isActive: true },
+        orderBy: { createdAt: 'desc' },
+        include: { _count: { select: { customers: true, invoices: true, bizTransactions: true } } },
+      }),
+      this.prisma.businessMember.findMany({
+        where: { userId },
+        include: {
+          business: {
+            include: { _count: { select: { customers: true, invoices: true, bizTransactions: true } } },
           },
         },
-      },
-    });
+      }),
+    ]);
+
+    const shared = memberBusinesses
+      .filter(m => m.business.isActive)
+      .map(m => ({ ...m.business, memberRole: m.role, memberTitle: m.title }));
+
+    return [
+      ...ownedBusinesses.map(b => ({ ...b, memberRole: 'OWNER' as const })),
+      ...shared,
+    ];
   }
 
   // ─── Obtener una empresa por ID ───────────────────────────────────────────────
