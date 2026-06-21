@@ -30,6 +30,9 @@ import { BusinessMembersModule }  from './modules/business-members/business-memb
 // ─── Módulo Subscriptions ─────────────────────────────────────────────────────
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 
+// ─── Módulo Admin ─────────────────────────────────────────────────────────────
+import { AdminModule } from './modules/admin/admin.module';
+
 // ─── Módulo Email Ingestion ───────────────────────────────────────────────────
 import { EmailIngestionModule } from './modules/email-ingestion/email-ingestion.module';
 import { EmailConfigModule }    from './modules/email-config/email-config.module';
@@ -66,6 +69,9 @@ import { EmailConfigModule }    from './modules/email-config/email-config.module
 
     // Subscriptions
     SubscriptionsModule,
+
+    // Admin
+    AdminModule,
 
     // Email Ingestion Engine (cron + IMAP)
     EmailIngestionModule,
