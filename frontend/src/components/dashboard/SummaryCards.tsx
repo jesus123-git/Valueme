@@ -13,7 +13,12 @@ interface Props {
 // solo el indicador de dirección lleva color, nunca la tarjeta entera.
 
 export function SummaryCards({ data }: Props) {
-  const netBalance = data.summary.totalByCurrency['COP'] ?? 0;
+  // Multimoneda: agrupar saldos por divisa. La moneda principal (COP si existe,
+  // si no la primera) se muestra grande; las demás en filas compactas debajo.
+  const byCurrency = Object.entries(data.summary.totalByCurrency ?? {});
+  const sorted = byCurrency.sort(([a], [b]) =>
+    a === 'COP' ? -1 : b === 'COP' ? 1 : a.localeCompare(b));
+  const [main, ...others] = sorted.length ? sorted : [['COP', 0] as [string, number]];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -31,10 +36,23 @@ export function SummaryCards({ data }: Props) {
         </div>
 
         <p className="font-display text-3xl font-bold tracking-tight tabular-nums">
-          {formatCurrency(netBalance)}
+          {formatCurrency(main[1], main[0])}
         </p>
+
+        {/* Saldos en otras monedas (cuentas en USD, MXN, etc.) */}
+        {others.length > 0 && (
+          <div className="mt-2 space-y-0.5">
+            {others.map(([code, total]) => (
+              <p key={code} className="text-white/80 text-sm font-semibold tabular-nums">
+                {formatCurrency(total, code)} <span className="text-white/50 text-xs">{code}</span>
+              </p>
+            ))}
+          </div>
+        )}
+
         <p className="text-white/60 text-xs mt-1.5">
           {data.summary.accountCount} cuenta{data.summary.accountCount !== 1 ? 's' : ''} activa{data.summary.accountCount !== 1 ? 's' : ''}
+          {others.length > 0 && ` · ${sorted.length} monedas`}
         </p>
       </div>
 

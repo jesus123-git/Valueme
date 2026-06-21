@@ -1,5 +1,6 @@
 'use client';
 
+import { currencyOptions } from '@/lib/currencies';
 import { useState, useCallback } from 'react';
 import Modal   from '@/components/ui/Modal';
 import Input   from '@/components/ui/Input';
@@ -50,11 +51,8 @@ const PROVIDER_OPTIONS = [
   { value: 'BANCOLOMBIA', label: '🏦  Bancolombia'          },
 ];
 
-const CURRENCY_OPTIONS = [
-  { value: 'COP', label: 'COP — Peso colombiano' },
-  { value: 'USD', label: 'USD — Dólar'           },
-  { value: 'EUR', label: 'EUR — Euro'            },
-];
+// Catálogo LATAM centralizado — ver lib/currencies.ts
+const CURRENCY_OPTIONS = currencyOptions;
 
 // ─── Config dinámica por proveedor ────────────────────────────────────────────
 
