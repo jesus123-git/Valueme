@@ -35,5 +35,6 @@ export interface AuthContextValue {
   loading: boolean;          // true mientras se verifica la sesión al cargar
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   logout: () => void;
 }

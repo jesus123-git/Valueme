@@ -89,6 +89,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/dashboard');
   }, [router]);
 
+  // ── Login con Google ────────────────────────────────────────────────────────
+
+  const loginWithGoogle = useCallback(async (idToken: string) => {
+    const data = await apiPost<AuthResponse>('/auth/google', { idToken }, { public: true });
+    setToken(data.accessToken);
+    setSessionCookie(data.accessToken);
+    setUser(data.user);
+    router.push('/dashboard');
+  }, [router]);
+
   // ── Logout ────────────────────────────────────────────────────────────────
 
   const logout = useCallback(() => {
@@ -99,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
