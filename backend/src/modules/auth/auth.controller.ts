@@ -24,6 +24,7 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -54,6 +55,18 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'Credenciales incorrectas' })
   login(@Body() dto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(dto);
+  }
+
+  // ─── POST /api/v1/auth/google ─────────────────────────────────────────────
+
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60_000, limit: 5 } }) // mismo límite que login
+  @ApiOperation({ summary: 'Iniciar sesión o registrarse con Google (ID token)' })
+  @ApiOkResponse({ type: AuthResponseDto, description: 'Login con Google exitoso, token JWT emitido' })
+  @ApiUnauthorizedResponse({ description: 'Token de Google inválido' })
+  google(@Body() dto: GoogleLoginDto): Promise<AuthResponseDto> {
+    return this.authService.googleLogin(dto.idToken);
   }
 
   // ─── GET /api/v1/auth/me ──────────────────────────────────────────────────
