@@ -5,6 +5,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { OAuth2Client } from 'google-auth-library';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CategoriesService } from '../categories/categories.service';
@@ -19,10 +21,22 @@ const BCRYPT_ROUNDS = 10;
 
 @Injectable()
 export class AuthService {
+  private googleClient?: OAuth2Client;
+
+  private getGoogleClient(): OAuth2Client {
+    if (!this.googleClient) {
+      this.googleClient = new OAuth2Client(
+        this.configService.get<string>('GOOGLE_CLIENT_ID'),
+      );
+    }
+    return this.googleClient;
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly categoriesService: CategoriesService,
+    private readonly configService: ConfigService,
   ) {}
 
   // ─── Registro ─────────────────────────────────────────────────────────────
@@ -72,7 +86,9 @@ export class AuthService {
 
     // 2. Verificar contraseña con tiempo constante (bcrypt.compare evita timing attacks)
     const passwordValid =
-      user !== null && (await bcrypt.compare(dto.password, user.passwordHash));
+      user !== null &&
+      user.passwordHash !== null &&
+      (await bcrypt.compare(dto.password, user.passwordHash));
 
     if (!passwordValid) {
       // Mensaje genérico: no indicamos si el email existe o no
@@ -86,6 +102,65 @@ export class AuthService {
       plan: user.plan,
       isStaff: user.isStaff,
     });
+  }
+
+  // ─── Login con Google (flujo ID token) ─────────────────────────────────────
+
+  async googleLogin(idToken: string) {
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+
+    let payload;
+    try {
+      const ticket = await this.getGoogleClient().verifyIdToken({
+        idToken,
+        audience: clientId,
+      });
+      payload = ticket.getPayload();
+    } catch {
+      throw new UnauthorizedException('Token de Google inválido');
+    }
+
+    if (!payload?.email || !payload.sub) {
+      throw new UnauthorizedException('Token de Google inválido');
+    }
+
+    const email = payload.email;
+    const googleId = payload.sub;
+    const name = payload.name ?? null;
+
+    const existing = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, name: true, plan: true, isStaff: true, googleId: true },
+    });
+
+    if (existing) {
+      if (!existing.googleId) {
+        await this.prisma.user.update({
+          where: { id: existing.id },
+          data: { googleId },
+        });
+      }
+      return this.buildTokenResponse({
+        id: existing.id,
+        email: existing.email,
+        name: existing.name,
+        plan: existing.plan,
+        isStaff: existing.isStaff,
+      });
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        name,
+        googleId,
+      },
+      select: { id: true, email: true, name: true, plan: true, isStaff: true },
+    });
+
+    void this.categoriesService.seedDefaults(user.id);
+
+    return this.buildTokenResponse(user);
   }
 
   // ─── Actualizar perfil ────────────────────────────────────────────────────
@@ -113,6 +188,12 @@ export class AuthService {
   async changePassword(userId: string, dto: { currentPassword: string; newPassword: string }) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException('Usuario no encontrado');
+
+    if (!user.passwordHash) {
+      throw new BadRequestException(
+        'Tu cuenta usa acceso con Google. Aún no tiene contraseña.',
+      );
+    }
 
     const valid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
     if (!valid) throw new BadRequestException('La contraseña actual es incorrecta');
