@@ -6,7 +6,7 @@ interface Props {
   data: DashboardData;
 }
 
-// ─── SummaryCards — lenguaje visual NOMI ──────────────────────────────────────
+// ─── SummaryCards — lenguaje visual ValueMe ───────────────────────────────────
 //
 // Una sola tarjeta héroe en teal profundo (la firma de la marca) y métricas
 // sobre superficie monocroma con borde fino. El color se usa con intención:
@@ -23,7 +23,7 @@ export function SummaryCards({ data }: Props) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-      {/* ── Saldo total — tarjeta héroe NOMI ── */}
+      {/* ── Saldo total — tarjeta héroe ValueMe ── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 to-brand-900 p-6 text-white">
         {/* Glow decorativo sutil */}
         <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" aria-hidden />

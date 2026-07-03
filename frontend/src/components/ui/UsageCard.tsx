@@ -57,7 +57,7 @@ export function UsageCard() {
         onClick={() => router.push('/planes')}
         className="w-full mt-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-semibold transition"
       >
-        Actualizar a Nomi PRO — $16.900/mes
+        Actualizar a ValueMe PRO — $16.900/mes
       </button>
     </div>
   );

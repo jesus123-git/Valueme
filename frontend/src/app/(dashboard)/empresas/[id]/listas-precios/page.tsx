@@ -127,8 +127,8 @@ export default function PriceListsPage() {
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         <PlanGate
           requiredPlan="PRO"
-          featureName="Listas de precios — Nomi PRO"
-          featureDescription="Crea precios diferenciados por tipo de cliente: mayorista, minorista, VIP. Disponible en Nomi PRO y Nomi Empresa."
+          featureName="Listas de precios — ValueMe PRO"
+          featureDescription="Crea precios diferenciados por tipo de cliente: mayorista, minorista, VIP. Disponible en ValueMe PRO y ValueMe Empresa."
         >
         {/* Toggle activar/desactivar */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 flex items-center justify-between">

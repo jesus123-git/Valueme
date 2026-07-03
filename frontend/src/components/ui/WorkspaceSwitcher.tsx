@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 //
 // Dropdown elegante en el Navbar para cambiar entre módulos.
 // Al cambiar de workspace redirige a /personal o /empresas y cambia el
-// color de acento de toda la app (teal NOMI = personal, violeta = empresarial).
+// color de acento de toda la app (teal ValueMe = personal, violeta = empresarial).
 
 interface Option {
   value:    WorkspaceMode;

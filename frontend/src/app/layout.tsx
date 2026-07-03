@@ -6,15 +6,15 @@ import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import { QueryProvider } from '@/components/ui/QueryProvider';
 import './globals.css';
 
-// ─── Tipografía NOMI ──────────────────────────────────────────────────────────
+// ─── Tipografía ValueMe ───────────────────────────────────────────────────────
 // Manrope → cuerpo: corporativa, cálida, excelente legibilidad en cifras.
 // Sora    → titulares y marca: geométrica, elegante, con carácter propio.
 const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope' });
 const sora    = Sora({ subsets: ['latin'], variable: '--font-sora', weight: ['400', '600', '700', '800'] });
 
 export const metadata: Metadata = {
-  title: { default: 'NOMI — Finanzas con claridad', template: '%s | NOMI' },
-  description: 'NOMI: la plataforma financiera para personas y negocios en Colombia',
+  title: { default: 'ValueMe — Finanzas con claridad', template: '%s | ValueMe' },
+  description: 'ValueMe: la plataforma financiera para personas y negocios en Colombia',
 };
 
 // ─── RootLayout ────────────────────────────────────────────────────────────────

@@ -31,7 +31,7 @@ const PLANS = [
   },
   {
     key: 'PRO' as const,
-    name: 'Nomi PRO',
+    name: 'ValueMe PRO',
     price: '$16.900',
     period: 'mes',
     description: 'Para negocios que están creciendo',
@@ -50,14 +50,14 @@ const PLANS = [
   },
   {
     key: 'EMPRESA' as const,
-    name: 'Nomi Empresa',
+    name: 'ValueMe Empresa',
     price: '$34.900',
     period: 'mes',
     description: 'Para grupos y múltiples negocios',
     color: 'border-gray-200 dark:border-gray-700',
     badge: null,
     features: [
-      'Todo en Nomi PRO',
+      'Todo en ValueMe PRO',
       'Empresas ilimitadas',
       'Usuarios ilimitados por empresa',
       'Soporte prioritario',

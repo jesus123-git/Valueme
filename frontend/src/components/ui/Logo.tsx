@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-// ─── Logo NOMI ────────────────────────────────────────────────────────────────
+// ─── Logo ValueMe ───────────────────────────────────────────────────────────
 //
-// Identidad de marca de NOMI. Dos piezas:
-//   <LogoMark>  — isotipo: cuadrado redondeado teal con la "n" en negativo
-//   <Logo>      — isotipo + wordmark "nomi" en Sora
+// Identidad de marca de ValueMe. Dos piezas:
+//   <LogoMark>  — isotipo: cuadrado redondeado teal con la "V" en negativo
+//   <Logo>      — isotipo + wordmark "ValueMe" en Sora
 //
 // El isotipo usa un degradado sutil del teal base (#00796B) hacia su tono
 // profundo para dar volumen sin perder sobriedad corporativa.
@@ -35,7 +35,7 @@ export function LogoMark({ size = 32, className }: { size?: number; className?: 
         className="font-display font-extrabold text-white leading-none"
         style={{ fontSize: size * 0.55, marginTop: -size * 0.02 }}
       >
-        n
+        V
       </span>
     </div>
   );
@@ -50,7 +50,7 @@ export function Logo({ size = 32, markOnly = false, href = '/', className }: Log
           className="font-display font-bold tracking-[0.02em] text-slate-900 dark:text-white leading-none"
           style={{ fontSize: size * 0.56 }}
         >
-          NOMI
+          ValueMe
         </span>
       )}
     </span>
@@ -59,7 +59,7 @@ export function Logo({ size = 32, markOnly = false, href = '/', className }: Log
   if (!href) return content;
 
   return (
-    <Link href={href} aria-label="NOMI — inicio" className="group">
+    <Link href={href} aria-label="ValueMe — inicio" className="group">
       {content}
     </Link>
   );

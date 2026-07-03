@@ -4,14 +4,14 @@ import { useRouter } from 'next/navigation';
 import { X, Zap } from 'lucide-react';
 
 const MESSAGES: Record<string, { title: string; body: string }> = {
-  INVOICE_LIMIT_REACHED:  { title: 'Límite de facturas alcanzado',     body: 'Has usado todas tus facturas del mes en el plan gratuito. Con Nomi PRO creas facturas ilimitadas.' },
-  CLIENT_LIMIT_REACHED:   { title: 'Límite de clientes alcanzado',     body: 'Alcanzaste el límite de 15 clientes. Con Nomi PRO puedes añadir clientes ilimitados.' },
-  PRODUCT_LIMIT_REACHED:  { title: 'Límite de productos alcanzado',    body: 'Tu catálogo tiene 10 productos activos. Con Nomi PRO tienes productos ilimitados.' },
-  QUOTE_LIMIT_REACHED:    { title: 'Límite de cotizaciones alcanzado', body: 'Usaste tus 5 cotizaciones del mes. Con Nomi PRO creas cotizaciones ilimitadas.' },
-  SUPPLIER_LIMIT_REACHED: { title: 'Límite de proveedores alcanzado',  body: 'Alcanzaste el límite de 5 proveedores. Con Nomi PRO tienes proveedores ilimitados.' },
-  BUSINESS_LIMIT_REACHED: { title: 'Límite de empresas alcanzado',     body: 'Tu plan solo permite 1 empresa activa. Con Nomi Empresa puedes gestionar negocios ilimitados.' },
+  INVOICE_LIMIT_REACHED:  { title: 'Límite de facturas alcanzado',     body: 'Has usado todas tus facturas del mes en el plan gratuito. Con ValueMe PRO creas facturas ilimitadas.' },
+  CLIENT_LIMIT_REACHED:   { title: 'Límite de clientes alcanzado',     body: 'Alcanzaste el límite de 15 clientes. Con ValueMe PRO puedes añadir clientes ilimitados.' },
+  PRODUCT_LIMIT_REACHED:  { title: 'Límite de productos alcanzado',    body: 'Tu catálogo tiene 10 productos activos. Con ValueMe PRO tienes productos ilimitados.' },
+  QUOTE_LIMIT_REACHED:    { title: 'Límite de cotizaciones alcanzado', body: 'Usaste tus 5 cotizaciones del mes. Con ValueMe PRO creas cotizaciones ilimitadas.' },
+  SUPPLIER_LIMIT_REACHED: { title: 'Límite de proveedores alcanzado',  body: 'Alcanzaste el límite de 5 proveedores. Con ValueMe PRO tienes proveedores ilimitados.' },
+  BUSINESS_LIMIT_REACHED: { title: 'Límite de empresas alcanzado',     body: 'Tu plan solo permite 1 empresa activa. Con ValueMe Empresa puedes gestionar negocios ilimitados.' },
   MEMBER_LIMIT_REACHED:   { title: 'Límite de equipo alcanzado',       body: 'Tu plan no permite más colaboradores. Actualiza para ampliar tu equipo.' },
-  FEATURE_NOT_AVAILABLE:  { title: 'Función exclusiva PRO',            body: 'Las listas de precios diferenciadas están disponibles desde Nomi PRO.' },
+  FEATURE_NOT_AVAILABLE:  { title: 'Función exclusiva PRO',            body: 'Las listas de precios diferenciadas están disponibles desde ValueMe PRO.' },
 };
 
 interface Props {

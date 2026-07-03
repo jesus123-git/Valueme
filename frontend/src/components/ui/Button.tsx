@@ -10,7 +10,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-  // Teal NOMI sólido — el único acento fuerte de la interfaz
+  // Teal ValueMe sólido — el único acento fuerte de la interfaz
   primary:
     'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 ' +
     'shadow-sm shadow-brand-600/20 focus:ring-brand-500 ' +

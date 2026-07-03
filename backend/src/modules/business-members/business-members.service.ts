@@ -72,10 +72,10 @@ export class BusinessMembersService {
 
       if (this.resend) {
         await this.resend.emails.send({
-          from: 'Nomi <noreply@nomi.co>',
+          from: 'ValueMe <noreply@nomi.co>',
           to: existingUser.email,
-          subject: `Te han añadido a ${business.name} en Nomi`,
-          html: `<p>Hola ${existingUser.name ?? ''},</p><p>Ahora tienes acceso a <strong>${business.name}</strong> en Nomi como <strong>${dto.role === 'EDITOR' ? 'Editor' : 'Visualizador'}</strong>.</p><p><a href="${frontendUrl}/empresas">Ver mis empresas</a></p>`,
+          subject: `Te han añadido a ${business.name} en ValueMe`,
+          html: `<p>Hola ${existingUser.name ?? ''},</p><p>Ahora tienes acceso a <strong>${business.name}</strong> en ValueMe como <strong>${dto.role === 'EDITOR' ? 'Editor' : 'Visualizador'}</strong>.</p><p><a href="${frontendUrl}/empresas">Ver mis empresas</a></p>`,
         });
       }
       return member;
@@ -95,10 +95,10 @@ export class BusinessMembersService {
     if (this.resend) {
       const inviteUrl = `${frontendUrl}/invites/${token}`;
       await this.resend.emails.send({
-        from: 'Nomi <noreply@nomi.co>',
+        from: 'ValueMe <noreply@nomi.co>',
         to: dto.email,
-        subject: `Invitación a ${business.name} en Nomi`,
-        html: `<p>Te han invitado a gestionar <strong>${business.name}</strong> en Nomi.</p><p><a href="${inviteUrl}">Aceptar invitación</a></p><p>Este enlace expira en 72 horas.</p>`,
+        subject: `Invitación a ${business.name} en ValueMe`,
+        html: `<p>Te han invitado a gestionar <strong>${business.name}</strong> en ValueMe.</p><p><a href="${inviteUrl}">Aceptar invitación</a></p><p>Este enlace expira en 72 horas.</p>`,
       });
     }
 
