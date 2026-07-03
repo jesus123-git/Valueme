@@ -23,10 +23,12 @@ import { useRouter } from 'next/navigation';
 import {
   apiGet,
   apiPost,
+  apiPatch,
   getToken,
   removeToken,
   setToken,
 } from '@/lib/api';
+import { moduleHomePath } from '@/lib/modules';
 import { setSessionCookie, removeSessionCookie } from '@/lib/cookies';
 import type {
   AuthContextValue,
@@ -69,6 +71,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
+  // ── Redirección post-autenticación ──────────────────────────────────────────
+  // Si el usuario aún no completó el onboarding, lo enviamos allí; de lo
+  // contrario, a la ruta de inicio de su módulo preferido.
+
+  const redirectAfterAuth = useCallback((u: User) => {
+    if (!u.onboardingCompletedAt) router.push('/onboarding');
+    else router.push(moduleHomePath(u));
+  }, [router]);
+
   // ── Login ─────────────────────────────────────────────────────────────────
 
   const login = useCallback(async (payload: LoginPayload) => {
@@ -76,8 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(data.accessToken);
     setSessionCookie(data.accessToken);
     setUser(data.user);
-    router.push('/dashboard');
-  }, [router]);
+    redirectAfterAuth(data.user);
+  }, [router, redirectAfterAuth]);
 
   // ── Register ──────────────────────────────────────────────────────────────
 
@@ -86,8 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(data.accessToken);
     setSessionCookie(data.accessToken);
     setUser(data.user);
-    router.push('/dashboard');
-  }, [router]);
+    redirectAfterAuth(data.user);
+  }, [router, redirectAfterAuth]);
 
   // ── Login con Google ────────────────────────────────────────────────────────
 
@@ -96,8 +107,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(data.accessToken);
     setSessionCookie(data.accessToken);
     setUser(data.user);
-    router.push('/dashboard');
+    redirectAfterAuth(data.user);
+  }, [router, redirectAfterAuth]);
+
+  // ── Onboarding y preferencias ───────────────────────────────────────────────
+
+  const completeOnboarding = useCallback(async (payload: {
+    name?: string; modulePreference: User['modulePreference']; primaryCurrency: string;
+  }) => {
+    const updated = await apiPatch<User>('/auth/onboarding', payload);
+    setUser(updated);
+    router.push(moduleHomePath(updated));
   }, [router]);
+
+  const updatePreferences = useCallback(async (payload: {
+    name?: string; modulePreference?: User['modulePreference']; primaryCurrency?: string;
+  }) => {
+    const updated = await apiPatch<User>('/auth/preferences', payload);
+    setUser(updated);
+  }, []);
 
   // ── Logout ────────────────────────────────────────────────────────────────
 
@@ -109,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, completeOnboarding, updatePreferences, logout }}>
       {children}
     </AuthContext.Provider>
   );
