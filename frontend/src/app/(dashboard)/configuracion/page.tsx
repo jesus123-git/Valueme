@@ -3,6 +3,7 @@
 import { ThemeToggle }    from '@/components/ui/ThemeToggle';
 import { UserMenu }       from '@/components/ui/UserMenu';
 import { EmailConfigCard } from '@/components/settings/EmailConfigCard';
+import { PreferencesCard } from '@/components/settings/PreferencesCard';
 
 // ─── Página de Configuración ──────────────────────────────────────────────────
 
@@ -23,6 +24,7 @@ export default function ConfiguracionPage() {
 
       {/* Contenido */}
       <main className="mx-auto max-w-2xl px-6 py-8 flex flex-col gap-6">
+        <PreferencesCard />
         <EmailConfigCard />
       </main>
     </div>
