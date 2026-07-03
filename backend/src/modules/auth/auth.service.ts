@@ -62,7 +62,10 @@ export class AuthService {
         passwordHash,
       },
       // select evita que el passwordHash salga en la respuesta
-      select: { id: true, email: true, name: true, plan: true, isStaff: true },
+      select: {
+        id: true, email: true, name: true, plan: true, isStaff: true,
+        onboardingCompletedAt: true, modulePreference: true, primaryCurrency: true,
+      },
     });
 
     // 4. Crear las categorías por defecto en background.
@@ -81,7 +84,10 @@ export class AuthService {
     // 1. Buscar al usuario (incluimos passwordHash solo aquí, en el servicio)
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
-      select: { id: true, email: true, name: true, plan: true, passwordHash: true, isStaff: true },
+      select: {
+        id: true, email: true, name: true, plan: true, passwordHash: true, isStaff: true,
+        onboardingCompletedAt: true, modulePreference: true, primaryCurrency: true,
+      },
     });
 
     // 2. Verificar contraseña con tiempo constante (bcrypt.compare evita timing attacks)
@@ -101,6 +107,9 @@ export class AuthService {
       name: user.name,
       plan: user.plan,
       isStaff: user.isStaff,
+      onboardingCompletedAt: user.onboardingCompletedAt,
+      modulePreference: user.modulePreference,
+      primaryCurrency: user.primaryCurrency,
     });
   }
 
@@ -130,7 +139,10 @@ export class AuthService {
 
     const existing = await this.prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true, name: true, plan: true, isStaff: true, googleId: true },
+      select: {
+        id: true, email: true, name: true, plan: true, isStaff: true, googleId: true,
+        onboardingCompletedAt: true, modulePreference: true, primaryCurrency: true,
+      },
     });
 
     if (existing) {
@@ -146,6 +158,9 @@ export class AuthService {
         name: existing.name,
         plan: existing.plan,
         isStaff: existing.isStaff,
+        onboardingCompletedAt: existing.onboardingCompletedAt,
+        modulePreference: existing.modulePreference,
+        primaryCurrency: existing.primaryCurrency,
       });
     }
 
@@ -155,7 +170,10 @@ export class AuthService {
         name,
         googleId,
       },
-      select: { id: true, email: true, name: true, plan: true, isStaff: true },
+      select: {
+        id: true, email: true, name: true, plan: true, isStaff: true,
+        onboardingCompletedAt: true, modulePreference: true, primaryCurrency: true,
+      },
     });
 
     void this.categoriesService.seedDefaults(user.id);
@@ -212,6 +230,9 @@ export class AuthService {
     name: string | null;
     plan: import('@prisma/client').PlanType;
     isStaff: boolean;
+    onboardingCompletedAt: Date | null;
+    modulePreference: import('@prisma/client').ModulePreference;
+    primaryCurrency: string;
   }) {
     const payload: JwtPayload = { sub: user.id, email: user.email };
 
@@ -223,6 +244,9 @@ export class AuthService {
         name: user.name,
         plan: user.plan,
         isStaff: user.isStaff,
+        onboardingCompletedAt: user.onboardingCompletedAt,
+        modulePreference: user.modulePreference,
+        primaryCurrency: user.primaryCurrency,
       },
     };
   }
