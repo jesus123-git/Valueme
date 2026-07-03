@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { WorkspaceProvider } from '@/context/workspace.context';
+import { ModuleGuard } from '@/components/ui/ModuleGuard';
 
 // ─── DashboardLayout ──────────────────────────────────────────────────────────
 //
@@ -13,7 +14,9 @@ import { WorkspaceProvider } from '@/context/workspace.context';
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <WorkspaceProvider>
-      {children}
+      <ModuleGuard>
+        {children}
+      </ModuleGuard>
     </WorkspaceProvider>
   );
 }

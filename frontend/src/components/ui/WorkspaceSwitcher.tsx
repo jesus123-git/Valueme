@@ -40,11 +40,12 @@ const OPTIONS: Option[] = [
 ];
 
 export function WorkspaceSwitcher() {
-  const { mode, setMode } = useWorkspace();
+  const { mode, setMode, available } = useWorkspace();
   const [open, setOpen]   = useState(false);
   const ref               = useRef<HTMLDivElement>(null);
 
   const current = OPTIONS.find(o => o.value === mode)!;
+  const visibleOptions = OPTIONS.filter(o => available.includes(o.value));
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -70,6 +71,9 @@ export function WorkspaceSwitcher() {
     setOpen(false);
     if (opt.value !== mode) setMode(opt.value);
   };
+
+  // Si solo hay un módulo (o ninguno) disponible, no mostramos el switcher.
+  if (visibleOptions.length <= 1) return null;
 
   return (
     <div ref={ref} className="relative">
@@ -119,7 +123,7 @@ export function WorkspaceSwitcher() {
               Módulo activo
             </p>
 
-            {OPTIONS.map(opt => {
+            {visibleOptions.map(opt => {
               const isActive = opt.value === mode;
               return (
                 <button

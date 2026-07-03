@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '@/context/auth.context';
+import { availableModules as computeAvailable } from '@/lib/modules';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -10,6 +12,7 @@ export type WorkspaceMode = 'personal' | 'empresas';
 interface WorkspaceContextValue {
   mode: WorkspaceMode;
   setMode: (mode: WorkspaceMode) => void;
+  available: WorkspaceMode[];
   isPersonal: boolean;
   isEmpresa: boolean;
   /** Color de acento según el workspace activo */
@@ -52,6 +55,9 @@ const EMPRESA_ACCENT = {
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const router   = useRouter();
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const available: WorkspaceMode[] = user ? computeAvailable(user.modulePreference) : ['personal', 'empresas'];
 
   // Inferir modo desde la ruta actual
   const inferMode = (path: string): WorkspaceMode =>
@@ -80,6 +86,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       value={{
         mode,
         setMode,
+        available,
         isPersonal: mode === 'personal',
         isEmpresa:  mode === 'empresas',
         accent,
