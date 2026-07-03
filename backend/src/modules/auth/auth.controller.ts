@@ -28,6 +28,8 @@ import { GoogleLoginDto } from './dto/google-login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { OnboardingDto } from './dto/onboarding.dto';
+import { PreferencesDto } from './dto/preferences.dto';
 
 @ApiTags('Auth')  // Agrupa los endpoints bajo "Auth" en Swagger
 @Controller('auth')
@@ -106,5 +108,31 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
   ) {
     return this.authService.changePassword(user.id, dto);
+  }
+
+  // ─── PATCH /api/v1/auth/onboarding ────────────────────────────────────────
+
+  @Patch('onboarding')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Completar el onboarding inicial del usuario' })
+  completeOnboarding(
+    @CurrentUser() user: { id: string },
+    @Body() dto: OnboardingDto,
+  ) {
+    return this.authService.completeOnboarding(user.id, dto);
+  }
+
+  // ─── PATCH /api/v1/auth/preferences ───────────────────────────────────────
+
+  @Patch('preferences')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Actualizar preferencias (módulo, moneda, nombre)' })
+  updatePreferences(
+    @CurrentUser() user: { id: string },
+    @Body() dto: PreferencesDto,
+  ) {
+    return this.authService.updatePreferences(user.id, dto);
   }
 }

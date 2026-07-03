@@ -222,6 +222,49 @@ export class AuthService {
     return { message: 'Contraseña actualizada correctamente' };
   }
 
+  // ─── Onboarding y preferencias ────────────────────────────────────────────
+
+  // Campos que el frontend necesita del usuario tras cualquier cambio de perfil/preferencias
+  private readonly userSelect = {
+    id: true, email: true, name: true, plan: true, isStaff: true,
+    onboardingCompletedAt: true, modulePreference: true, primaryCurrency: true,
+  } as const;
+
+  async completeOnboarding(
+    userId: string,
+    dto: { name?: string; modulePreference: import('@prisma/client').ModulePreference; primaryCurrency: string },
+  ) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        modulePreference: dto.modulePreference,
+        primaryCurrency: dto.primaryCurrency,
+        onboardingCompletedAt: new Date(),
+      },
+      select: this.userSelect,
+    });
+  }
+
+  async updatePreferences(
+    userId: string,
+    dto: {
+      name?: string;
+      modulePreference?: import('@prisma/client').ModulePreference;
+      primaryCurrency?: string;
+    },
+  ) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.modulePreference !== undefined && { modulePreference: dto.modulePreference }),
+        ...(dto.primaryCurrency !== undefined && { primaryCurrency: dto.primaryCurrency }),
+      },
+      select: this.userSelect,
+    });
+  }
+
   // ─── Helpers privados ─────────────────────────────────────────────────────
 
   private buildTokenResponse(user: {
