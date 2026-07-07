@@ -7,9 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '@/lib/axios';
-import Link from 'next/link';
-import { ArrowLeft, Plus, X, Package, Wrench, AlertTriangle, Edit2 } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Plus, X, Package, Wrench, AlertTriangle, Edit2 } from 'lucide-react';
 import { MoneyInput } from '@/components/ui/MoneyInput';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
@@ -168,26 +166,9 @@ export default function ProductsPage() {
     p.trackInventory && p.minStock != null && Number(p.stock) <= Number(p.minStock);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Navbar */}
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/empresas/${businessId}`}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
-            >
-              <ArrowLeft size={20} />
-            </Link>
-            <span className="font-semibold text-gray-900 dark:text-white">
-              Productos y servicios
-            </span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </nav>
-
-      <main className="max-w-5xl mx-auto px-6 py-8">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+      <main>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Productos</h1>
         {/* Header + filtros */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
