@@ -5,9 +5,7 @@ import { useParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { api } from '@/lib/axios';
-import Link from 'next/link';
-import { ArrowLeft, Plus, X, Tag, Star, Users, ChevronDown, ChevronUp, Edit2, Trash2 } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Plus, X, Tag, Star, Users, ChevronDown, ChevronUp, Edit2, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PlanGate } from '@/components/ui/PlanGate';
 
@@ -111,20 +109,10 @@ export default function PriceListsPage() {
   const usePriceLists = business?.usePriceLists ?? false;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href={`/empresas/${businessId}`} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
-              <ArrowLeft size={20} />
-            </Link>
-            <span className="font-semibold text-gray-900 dark:text-white">Listas de precios</span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </nav>
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+      <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Listas de precios</h1>
 
-      <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-4xl mx-auto space-y-6">
         <PlanGate
           requiredPlan="PRO"
           featureName="Listas de precios — ValueMe PRO"
