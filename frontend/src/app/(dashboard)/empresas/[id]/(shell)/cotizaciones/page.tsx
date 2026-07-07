@@ -8,8 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '@/lib/axios';
 import Link from 'next/link';
-import { ArrowLeft, Plus, X, FileText, Trash2, ArrowRight, CheckCircle } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Plus, X, FileText, Trash2, ArrowRight, CheckCircle } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -152,20 +151,8 @@ export default function QuotesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href={`/empresas/${businessId}`} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
-              <ArrowLeft size={20} />
-            </Link>
-            <span className="font-semibold text-gray-900 dark:text-white">Cotizaciones</span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </nav>
-
-      <main className="max-w-5xl mx-auto px-6 py-8">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+      <main className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
