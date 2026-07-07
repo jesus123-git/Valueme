@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/axios';
-import Link from 'next/link';
-import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, AlertCircle, Package } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Package } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
   LineChart, Line, CartesianGrid,
@@ -111,21 +109,10 @@ export default function ReportsPage() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Navbar */}
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href={`/empresas/${businessId}`} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
-              <ArrowLeft size={20} />
-            </Link>
-            <span className="font-semibold text-gray-900 dark:text-white">Reportes</span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </nav>
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+      <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Reportes</h1>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+      <main className="space-y-6">
         {/* KPIs resumen */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <KPICard
