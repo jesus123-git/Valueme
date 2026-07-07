@@ -7,9 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '@/lib/axios';
-import Link from 'next/link';
-import { ArrowLeft, Plus, X, Users, Mail, Phone, Trash2 } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Plus, X, Users, Mail, Phone, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 const schema = z.object({
@@ -73,21 +71,8 @@ export default function CustomersPage() {
   const onSubmit = (data: FormData) => createMutation.mutate(data);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Navbar */}
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href={`/empresas/${businessId}`} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
-              <ArrowLeft size={20} />
-            </Link>
-            <span className="font-semibold text-gray-900 dark:text-white">Clientes</span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </nav>
-
-      <main className="max-w-4xl mx-auto px-6 py-8">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+      <main>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
