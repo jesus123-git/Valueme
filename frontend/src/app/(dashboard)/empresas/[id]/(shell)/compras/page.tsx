@@ -6,8 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { api } from '@/lib/axios';
 import Link from 'next/link';
-import { ArrowLeft, Plus, X, ShoppingCart, Trash2, CheckCircle2, Banknote } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Plus, X, ShoppingCart, Trash2, CheckCircle2, Banknote } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface Supplier { id: string; name: string }
@@ -104,20 +103,8 @@ export default function PurchasesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href={`/empresas/${businessId}`} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
-              <ArrowLeft size={20} />
-            </Link>
-            <span className="font-semibold text-gray-900 dark:text-white">Órdenes de Compra</span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </nav>
-
-      <main className="max-w-5xl mx-auto px-6 py-8">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+      <main>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Órdenes de Compra</h1>
