@@ -5,9 +5,7 @@ import { useParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { api } from '@/lib/axios';
-import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, UserCheck, X } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Plus, Trash2, UserCheck, X } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { usePlan } from '@/context/PlanContext';
 import { useAuth } from '@/context/auth.context';
@@ -71,20 +69,10 @@ export default function EquipoPage() {
   const canInvite = isOwner && (usage?.memberLimit === null || (usage?.membersCount ?? 0) < (usage?.memberLimit ?? 0));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href={`/empresas/${businessId}`} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
-              <ArrowLeft size={20} />
-            </Link>
-            <span className="font-semibold text-gray-900 dark:text-white">Equipo</span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </nav>
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+      <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Equipo</h1>
 
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-3xl mx-auto space-y-6">
 
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500 dark:text-gray-400">
