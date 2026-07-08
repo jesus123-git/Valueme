@@ -76,6 +76,12 @@ enum ProductType {
   SERVICE
 }
 
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+}
+
 enum PurchaseStatus {
   DRAFT
   RECEIVED
@@ -267,6 +273,7 @@ model Business {
   bizTransactions BizTransaction[]
   members       BusinessMember[]
   invites       BusinessInvite[]
+  sales         Sale[]
 
   @@map("businesses")
 }
@@ -290,6 +297,7 @@ model Customer {
   priceList   PriceList? @relation(fields: [priceListId], references: [id])
   invoices    Invoice[]
   quotes      Quote[]
+  sales       Sale[]
 
   @@map("customers")
 }
@@ -337,6 +345,44 @@ model InvoiceItem {
   @@map("invoice_items")
 }
 
+// ─── Módulo Empresarial: Ventas (POS) ────────────────────────────────────────
+
+model Sale {
+  id             String        @id @default(uuid())
+  businessId     String
+  customerId     String?
+  number         String
+  subtotal       Float
+  tax            Float         @default(0)
+  total          Float
+  paymentMethod  PaymentMethod @default(CASH)
+  amountReceived Float?
+  createdAt      DateTime      @default(now())
+
+  business       Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer       Customer?  @relation(fields: [customerId], references: [id])
+  items          SaleItem[]
+
+  @@index([businessId, createdAt])
+  @@map("sales")
+}
+
+model SaleItem {
+  id          String   @id @default(uuid())
+  saleId      String
+  productId   String?
+  description String
+  quantity    Float
+  unitPrice   Float
+  taxRate     Float    @default(0)
+  total       Float
+
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id])
+
+  @@map("sale_items")
+}
+
 // ─── Módulo Empresarial: Productos y Servicios ───────────────────────────────
 
 model Product {
@@ -362,6 +408,7 @@ model Product {
   priceListItems  PriceListItem[]
   quoteItems      QuoteItem[]
   purchaseItems   PurchaseItem[]
+  saleItems       SaleItem[]
 
   @@index([businessId, isActive])
   @@map("products")
