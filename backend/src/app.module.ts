@@ -23,6 +23,7 @@ import { PriceListsModule }  from './modules/price-lists/price-lists.module';
 import { QuotesModule }      from './modules/quotes/quotes.module';
 import { SuppliersModule }   from './modules/suppliers/suppliers.module';
 import { PurchasesModule }   from './modules/purchases/purchases.module';
+import { SalesModule }       from './modules/sales/sales.module';
 import { PlanModule }             from './modules/plan/plan.module';
 import { ReportsModule }          from './modules/reports/reports.module';
 import { BusinessMembersModule }  from './modules/business-members/business-members.module';
@@ -64,6 +65,7 @@ import { EmailConfigModule }    from './modules/email-config/email-config.module
     QuotesModule,
     SuppliersModule,
     PurchasesModule,
+    SalesModule,
     ReportsModule,
     BusinessMembersModule,
 
